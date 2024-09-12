@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model URL {
+  url_id      Int              @id @default(autoincrement())
+  original_url String          @db.Text
+  short_code  String           @unique
+  created_at  DateTime         @default(now())
+  expires_at  DateTime?
+  stats  Stat[] // Relation to URL_Statistics
+
+  @@index([short_code])
+}
+
+model Stat {
+  stat_id     Int       @id @default(autoincrement())
+  url_id      Int
+  accessed_at DateTime  @default(now())
+  hashed_ip   String?   @db.VarChar(64)
+  user_agent  String?   @db.Text
+
+  // Foreign key relation to URLs
+  url URL @relation(fields: [url_id], references: [url_id])
+
+  @@index([url_id])
+}
