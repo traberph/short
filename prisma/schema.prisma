@@ -7,26 +7,77 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model URL {
-  url_id      Int              @id @default(autoincrement())
-  original_url String          @db.Text
-  short_code  String           @unique
-  created_at  DateTime         @default(now())
-  expires_at  DateTime?
-  stats  Stat[] // Relation to URL_Statistics
+// The basis for the pages providing a shortcode to access them
+model Page {
+  uuid         String         @id @default(uuid())
+  shortcode    String         @unique
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+  RedirectPage RedirectPage[]
+  CustomPage   CustomPage[]
+  Stat         Stat[]
 
-  @@index([short_code])
+  @@index([shortcode])
 }
 
+// The redirect page for the url shortener
+model RedirectPage {
+  uuid       String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  dest       String
+
+  page      Page        @relation(fields: [pageUuid], references: [uuid])
+  pageUuid  String
+  LinkBlock LinkBlock[]
+}
+
+// The custom page to display mutliple blocks of text and links
+model CustomPage {
+  uuid       String   @id @default(uuid())
+  title      String
+  image      String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  page      Page        @relation(fields: [pageUuid], references: [uuid])
+  pageUuid  String
+  TextBlock TextBlock[]
+  LinkBlock LinkBlock[]
+}
+
+// Text block to be displayed on the custom page
+// To provide additional information
+model TextBlock {
+  uuid       String   @id @default(uuid())
+  order      Int
+  text       String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  custom_page    CustomPage @relation(fields: [customPageUuid], references: [uuid])
+  customPageUuid String
+}
+
+// Link block to integrate a RedirectPage into the custom page
+model LinkBlock {
+  uuid  String @id @default(uuid())
+  order Int
+  title String
+
+  custom_page      CustomPage   @relation(fields: [customPageUuid], references: [uuid])
+  redirect_page    RedirectPage @relation(fields: [redirectPageUuid], references: [uuid])
+  customPageUuid   String
+  redirectPageUuid String
+}
+
+// Statts to track the links being accessed
 model Stat {
-  stat_id     Int       @id @default(autoincrement())
-  url_id      Int
-  accessed_at DateTime  @default(now())
-  hashed_ip   String?   @db.VarChar(64)
-  user_agent  String?   @db.Text
+  uuid        String   @id @default(uuid())
+  accessed_at DateTime @default(now())
+  hash        String?  @db.VarChar(64)
+  user_agent  String?  @db.Text
 
-  // Foreign key relation to URLs
-  url URL @relation(fields: [url_id], references: [url_id])
-
-  @@index([url_id])
+  page     Page   @relation(fields: [pageUuid], references: [uuid])
+  pageUuid String
 }

@@ -10,16 +10,19 @@ body {
 h1 {
   @apply text-5xl font-bold mb-6
 }
+
 h2 {
   @apply text-2xl font-bold mb-4
 }
 
 .form-group {
-  @apply mb-6;
+  @apply mb-2;
 }
+
 .form-field-error {
   @apply border-red-500;
 }
+
 .form-label-error {
   @apply text-red-500;
 }
@@ -27,12 +30,19 @@ h2 {
 form {
   @apply w-full;
 }
+
 input {
-  @apply w-full appearance-none bg-gray-800 border border-gray-800 text-gray-300 py-3 px-4 mb-3 leading-tight focus:outline-none focus:bg-gray-700 rounded;
+  @apply w-full appearance-none bg-gray-800 border border-gray-800 text-gray-300 py-3 px-4 mb-1 leading-tight focus:outline-none focus:bg-gray-700 rounded;
 }
+
+select {
+  @apply w-full appearance-none bg-gray-800 border border-gray-800 text-gray-300 py-3 px-4 mb-1 leading-tight focus:outline-none focus:bg-gray-700 rounded;
+}
+
 label {
   @apply block uppercase tracking-wide text-xs font-bold mb-2;
 }
+
 button {
   @apply rounded bg-green-600 hover:bg-green-700 text-white py-2 px-4 disabled:opacity-50
 }
