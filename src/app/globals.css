@@ -4,7 +4,7 @@
 
 
 body {
-  @apply text-gray-300 bg-gray-900 m-10
+  @apply text-gray-300 bg-gray-900
 }
 
 h1 {
@@ -45,4 +45,12 @@ label {
 
 button {
   @apply rounded bg-green-600 hover:bg-green-700 text-white py-2 px-4 disabled:opacity-50
+}
+
+.zebra {
+  @apply odd:bg-slate-800 p-2 rounded
+}
+
+.common-red {
+  @apply text-red-500
 }

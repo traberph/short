@@ -3,8 +3,6 @@
 import { z } from "zod";
 import prisma from "../../prisma/prisma";
 import { revalidatePath } from "next/cache";
-import { title } from "process";
-
 
 export async function createLinkBlock(prevState: any, formData: FormData) {
 
@@ -44,9 +42,9 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
 
     const page = await prisma.page.findUnique({
         where: { shortcode: data.data.redirectPageShortcode },
-        include: { RedirectPage: true }
+        include: { redirectPage: true }
     });
-    const redirectPage = page?.RedirectPage[0]
+    const redirectPage = page?.redirectPage[0]
     if (!redirectPage) {
         return {
             message: "Redirect page not found",

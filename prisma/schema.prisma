@@ -11,25 +11,26 @@ datasource db {
 model Page {
   uuid         String         @id @default(uuid())
   shortcode    String         @unique
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
-  RedirectPage RedirectPage[]
-  CustomPage   CustomPage[]
-  Stat         Stat[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  redirectPage RedirectPage[]
+  customPage   CustomPage[]
+  stat         Stat[]
+  pinnedPage   PinnedPage?
 
   @@index([shortcode])
 }
 
 // The redirect page for the url shortener
 model RedirectPage {
-  uuid       String   @id @default(uuid())
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  dest       String
+  uuid      String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dest      String
 
   page      Page        @relation(fields: [pageUuid], references: [uuid])
   pageUuid  String
-  LinkBlock LinkBlock[]
+  linkBlock LinkBlock[]
 }
 
 // The custom page to display mutliple blocks of text and links
@@ -42,20 +43,20 @@ model CustomPage {
 
   page      Page        @relation(fields: [pageUuid], references: [uuid])
   pageUuid  String
-  TextBlock TextBlock[]
-  LinkBlock LinkBlock[]
+  textBlock TextBlock[]
+  linkBlock LinkBlock[]
 }
 
 // Text block to be displayed on the custom page
 // To provide additional information
 model TextBlock {
-  uuid       String   @id @default(uuid())
-  order      Int
-  text       String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  uuid      String   @id @default(uuid())
+  order     Int
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  custom_page    CustomPage @relation(fields: [customPageUuid], references: [uuid])
+  customPage     CustomPage @relation(fields: [customPageUuid], references: [uuid])
   customPageUuid String
 }
 
@@ -65,19 +66,28 @@ model LinkBlock {
   order Int
   title String
 
-  custom_page      CustomPage   @relation(fields: [customPageUuid], references: [uuid])
-  redirect_page    RedirectPage @relation(fields: [redirectPageUuid], references: [uuid])
+  customPage       CustomPage   @relation(fields: [customPageUuid], references: [uuid])
+  redirectPage     RedirectPage @relation(fields: [redirectPageUuid], references: [uuid])
   customPageUuid   String
   redirectPageUuid String
 }
 
 // Statts to track the links being accessed
 model Stat {
-  uuid        String   @id @default(uuid())
-  accessed_at DateTime @default(now())
-  hash        String?  @db.VarChar(64)
-  user_agent  String?  @db.Text
+  uuid       String   @id @default(uuid())
+  accessedAt DateTime @default(now())
+  hash       String?  @db.VarChar(64)
+  userAgent  String?  @db.Text
 
   page     Page   @relation(fields: [pageUuid], references: [uuid])
   pageUuid String
+}
+
+model PinnedPage {
+  id        Int      @id @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page     Page   @relation(fields: [pageUuid], references: [uuid])
+  pageUuid String @unique
 }

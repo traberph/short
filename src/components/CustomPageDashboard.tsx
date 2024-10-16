@@ -17,25 +17,25 @@ export default async function CustomPageDashboard(params: { customPage: CustomPa
             order: "asc"
         },
         include: {
-            redirect_page: { include: { page: true } }
+            redirectPage: { include: { page: true } }
         }
     });
 
     return (<>
         {linkBlocks.map((block) => (
 
-            <div key={block.uuid} className="flex items-center justify-center mb-2 odd:bg-slate-800 p-2">
+            <div key={block.uuid} className="flex items-center justify-center mb-2 zebra">
                 <div className="mr-5">order: {block.order}</div>
                 <div className="mr-5">title: <span className="font-bold">{block.title}</span></div>
-                <div>connected link page: <span className="font-bold">{block.redirect_page.page.shortcode}</span></div>
+                <div>connected link page: <span className="font-bold">{block.redirectPage.page.shortcode}</span></div>
                 <div className="ml-auto">
                     <button>
-                        <a href={`/${block.redirect_page.page.shortcode}`} className="btn btn-primary">Visit</a>
+                        <a href={`/${block.redirectPage.page.shortcode}`} className="btn btn-primary">Visit</a>
                     </button>
                 </div>
                 <div className="ml-5">
                     <button>
-                        <a href={`/~/dash/${block.redirect_page.page.uuid}`} className="btn btn-primary">Details</a>
+                        <a href={`/~/dash/${block.redirectPage.page.uuid}`} className="btn btn-primary">Details</a>
                     </button>
                 </div>
                 <div className="ml-5">

@@ -1,25 +1,26 @@
 import React from 'react';
 import type { Prisma } from '@prisma/client';
-import DeletePageForm from './forms/deletePageForm';
 import Image from 'next/image';
 import Link from 'next/link';
-import prisma from '../../prisma/prisma';
 import LinkFavicon from './LinkFavicon';
+import PinPageToRootForm from './forms/pinPageToRootForm';
 
 type PageWithRelations = Prisma.PageGetPayload<{
     include: {
-        RedirectPage: true;
-        CustomPage: true;
+        pinnedPage: true;
+        redirectPage: true;
+        customPage: true;
         _count: {
-            select: { Stat: true }
+            select: { stat: true }
         }
     }
 }>
 
 export default async function PageListComponent({ page }: { page: PageWithRelations }) {
 
-    const redirectPage = page.RedirectPage[0];
-    const customPage = page.CustomPage[0];
+    const redirectPage = page.redirectPage[0];
+    const customPage = page.customPage[0];
+
 
     return (
         <Link href={`/~/dash/${page.uuid}`}>
@@ -32,6 +33,7 @@ export default async function PageListComponent({ page }: { page: PageWithRelati
                             height={100}
                             src={`data:image/png;base64,${customPage.image}`}
                             alt="icon"
+                            className="rounded-full"
                         />}
                 </div>
                 <div>
@@ -39,8 +41,11 @@ export default async function PageListComponent({ page }: { page: PageWithRelati
                     <p className="text-sm text-gray-400">{redirectPage ? redirectPage.dest : customPage.title}</p>
 
                 </div>
+                <div className="ml-5">
+                    {page.pinnedPage ? <p className="text-red-500">Pinned to root</p> : ""}
+                </div>
                 <div className="ml-auto">
-                    {page._count.Stat ? <p className="text-gray-400 font-bold">{page._count.Stat} visits</p> : ""}
+                    {page._count.stat ? <p className="text-gray-400 font-bold">{page._count.stat} visits</p> : ""}
                     {//<DeletePageForm uuid={page.uuid} />
                     }
                 </div>

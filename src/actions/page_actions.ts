@@ -3,6 +3,7 @@
 import { z } from "zod";
 import prisma from "../../prisma/prisma";
 import { revalidatePath } from "next/cache";
+import { error } from "console";
 
 export async function createCustomPage(prevState: any, fromData: FormData) {
     const schema = z.object({
@@ -144,6 +145,44 @@ export async function deletePage(prevState: any, fromData: FormData) {
 
     return {
         message: "Page deleted",
+    };
+
+}
+
+export async function pinPageToRoot(prevState: any, fromData: FormData) {
+    const schema = z.object({
+        uuid: z.string().uuid()
+    });
+
+    const data = schema.safeParse({
+        uuid: fromData.get("uuid")
+    });
+
+    if (!data.success) {
+        return {
+            message: "Invalid data",
+            error: data.error.flatten().fieldErrors,
+        };
+    }
+
+    await prisma.pinnedPage.upsert({
+        where: {
+            id: 1
+        },
+        update: {
+            pageUuid: data.data.uuid
+        },
+        create: {
+            id: 1,
+            pageUuid: data.data.uuid
+        }
+    });
+
+    revalidatePath("/dash");
+    revalidatePath("/");
+
+    return {
+        message: "Page pinned",
     };
 
 }

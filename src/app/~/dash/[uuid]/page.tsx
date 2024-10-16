@@ -1,44 +1,48 @@
-import Image from "next/image";
 import prisma from "../../../../../prisma/prisma";
 import { redirect } from "next/navigation";
-import DeletePageForm from "@/components/forms/deletePageForm";
-import { hashToColor } from "@/utils";
 import Link from "next/link";
-import CreateCustomPageForm from "@/components/forms/createCustomPageForm";
-import CreateLinkBlockForm from "@/components/forms/createLinkBlockForm";
+import Image from "next/image";
+import DeletePageForm from "@/components/forms/deletePageForm";
 import CustomPageDashboard from "@/components/CustomPageDashboard";
 import LinkFavicon from "@/components/LinkFavicon";
+import { hashToColor } from "@/utils";
+import PinPageToRootForm from "@/components/forms/pinPageToRootForm";
 
 export default async function DetailedStats({ params }: { params: { uuid: string } }) {
+    
+    const { uuid } = await params;
 
     const page = await prisma.page.findUnique({
-        where: { uuid: params.uuid },
+        where: { uuid: uuid },
         include: {
-            RedirectPage: true,
-            CustomPage: true,
-            Stat: { orderBy: { accessed_at: "desc" } },
+            pinnedPage: true,
+            redirectPage: true,
+            customPage: true,
+            stat: { orderBy: { accessedAt: "desc" } },
             _count: {
-                select: { Stat: true }
+                select: { stat: true }
             }
         }
     });
 
+
+
     // group stats by hash
 
     const stats = await prisma.stat.groupBy({
-        by: ['hash', 'user_agent'],
+        by: ['hash', 'userAgent'],
         where: {
-            pageUuid: params.uuid
+            pageUuid: uuid
         },
         _count: {
             uuid: true
         },
         _max: {
-            accessed_at: true
+            accessedAt: true
         },
         orderBy: {
             _max: {
-                accessed_at: "desc"
+                accessedAt: "desc"
             }
         }
     });
@@ -48,8 +52,8 @@ export default async function DetailedStats({ params }: { params: { uuid: string
         //return notFound();
     }
 
-    const redirectPage = page.RedirectPage[0];
-    const customPage = page.CustomPage[0];
+    const redirectPage = page.redirectPage[0];
+    const customPage = page.customPage[0];
 
     // get shortcodes if the page is a custom page to use in the link block form
     const linkPages = customPage ? await prisma.redirectPage.findMany({ include: { page: true } }) : undefined
@@ -66,17 +70,24 @@ export default async function DetailedStats({ params }: { params: { uuid: string
                                 width={100}
                                 height={100}
                                 alt=" "
+                                className="rounded-full"
                             />}
                     </div>
                     : ""}
 
                 <div>
                     <p>Shortcode: {page.shortcode}</p>
-                    {page.RedirectPage.length > 0 ?
-                        <p><a className="underline" href={page.RedirectPage[0].dest}>{page.RedirectPage[0].dest}</a></p> : ""}
+                    {page.redirectPage.length > 0 ?
+                        <p><a className="underline" href={page.redirectPage[0].dest}>{page.redirectPage[0].dest}</a></p> : ""}
+                </div>
+                <div className="ml-5">
+                {page.pinnedPage ? <p className="common-red">Pinned to root</p> : ""}
                 </div>
                 <div className="ml-auto">
                     <Link href={`/${page.shortcode}`}><button>View</button></Link>
+                </div>
+                <div className="ml-5">
+                    <PinPageToRootForm pageUuid={page.uuid} disabled={!!page.pinnedPage} />
                 </div>
                 <div className="ml-5">
                     <DeletePageForm uuid={page.uuid} />
@@ -87,23 +98,22 @@ export default async function DetailedStats({ params }: { params: { uuid: string
             {customPage ? <CustomPageDashboard customPage={customPage} /> : ""}
 
             <h2 className="mt-5">Stats</h2>
-            <p className="mt-5">All visits (not unique): {page._count.Stat}</p>
+            <p className="mt-5">All visits (not unique): {page._count.stat}</p>
             <br></br>
             <h2>Visitors</h2>
-            {stats.map((stat) => (<div className="my-5" key={stat.hash}>
-                <p>{stat.user_agent}</p>
+            {stats.map((stat) => (<div className="zebra" key={stat.hash}>
+                <p>{stat.userAgent}</p>
                 <p style={{ color: hashToColor(stat.hash) }}>{stat.hash}</p>
                 <p>Visits: {"" + stat._count.uuid}</p>
-                <p>Last Visit: {stat._max.accessed_at?.toDateString()}</p>
+                <p>Last Visit: {stat._max.accessedAt?.toDateString()}</p>
             </div>))}
 
-            <h2>All Visits</h2>
-
-            {page.Stat.map((stat) => (<div className="my-5" key={stat.uuid}>
-                <p>{stat.accessed_at.toDateString()}</p>
-                <p>{stat.user_agent}</p>
+            {/* <h2>All Visits</h2>
+            {page.stat.map((stat) => (<div className="my-5" key={stat.uuid}>
+                <p>{stat.accessedAt.toDateString()}</p>
+                <p>{stat.userAgent}</p>
                 <p style={{ color: hashToColor(stat.hash) }}>{stat.hash}</p>
-            </div>))}
+            </div>))} */}
         </div>
     );
 }

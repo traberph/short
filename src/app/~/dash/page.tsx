@@ -9,16 +9,17 @@ export default async function Dashboard() {
 
     const pages = await prisma.page.findMany({
         include: {
-            RedirectPage: true,
-            CustomPage: true,
+            pinnedPage: true,
+            redirectPage: true,
+            customPage: true,
             _count: {
-                select: { Stat: true }
+                select: { stat: true }
             }
         }
     });
 
-    const redirectPages = pages.filter((page) => page.RedirectPage.length > 0);
-    const customPages = pages.filter((page) => page.CustomPage.length > 0);
+    const redirectPages = pages.filter((page) => page.redirectPage.length > 0);
+    const customPages = pages.filter((page) => page.customPage.length > 0);
 
     return (<>
         <h2>Redirect Pages</h2>
