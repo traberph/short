@@ -42,6 +42,7 @@ export default async function CustomPageComponent(params: { customPage: CustomPa
           </button>
         ))}
       </div>
+      <div className="text-slate-700"><a className="underline" target="blank" href="https://github.com/traberph/short">traberph/short</a> by me running on <a className="underline" href="https://k3s.io/" target="blank">K3s</a></div>
     </div>
   );
 }
