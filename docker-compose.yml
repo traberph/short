@@ -9,4 +9,8 @@ services:
       - "5432:5432"
     volumes:
       - ./.vol_db:/var/lib/postgresql/data
-    
+
+  web:
+    build: .
+    ports:
+      - 3000:3000

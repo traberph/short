@@ -8,7 +8,13 @@ import LinkFavicon from "@/components/LinkFavicon";
 import { hashToColor } from "@/utils";
 import PinPageToRootForm from "@/components/forms/pinPageToRootForm";
 
-export default async function DetailedStats({ params }: { params: { uuid: string } }) {
+interface PageProps {
+    params: Promise<{
+        uuid: string
+    }>
+}
+
+export default async function DetailedStats({ params } : PageProps) {
     
     const { uuid } = await params;
 

@@ -3,8 +3,9 @@ import { headers } from "next/headers";
 import { notFound, redirect, RedirectType } from "next/navigation";
 import { sha256 } from "js-sha256";
 import CustomPageComponent from "@/components/CustomPageComponent";
+import { PageProps } from "../../../.next/types/app/layout";
 
-export default async function RedirectToUrl({ params }: { params: { shortcode: string } }) {
+export default async function RedirectToUrl({ params }: PageProps) {
 
     const { shortcode } = await params;
 
@@ -21,7 +22,7 @@ export default async function RedirectToUrl({ params }: { params: { shortcode: s
         return notFound()
     }
 
-    // Logg the visit
+    // Log the visit
     const requestHeaders = await headers();
     const userAgent = requestHeaders.get('user-agent') || 'unknown';
     const ip = requestHeaders.get('x-forwarded-for') || 'unknown';

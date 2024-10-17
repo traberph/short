@@ -68,7 +68,7 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
         };
     }
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
     revalidatePath(`/~/dash/${data.data.customPageUuid}/page`);
     revalidatePath(`/${customPage.page.shortcode}`);
 
@@ -99,7 +99,7 @@ export async function deleteLinkBlock(prevState: any, formData: FormData) {
         }
     });
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
 
     return {
         message: "Link block deleted"

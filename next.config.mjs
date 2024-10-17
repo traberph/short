@@ -11,7 +11,8 @@ const nextConfig = {
                 hostname: 'logo.clearbit.com',
             }
         ]
-    }
+    },
+    output: "standalone",
 
 };
 

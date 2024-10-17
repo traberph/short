@@ -3,7 +3,6 @@
 import { z } from "zod";
 import prisma from "../../prisma/prisma";
 import { revalidatePath } from "next/cache";
-import { error } from "console";
 
 export async function createCustomPage(prevState: any, fromData: FormData) {
     const schema = z.object({
@@ -49,12 +48,13 @@ export async function createCustomPage(prevState: any, fromData: FormData) {
         return {
             message: "Shortcode already exists",
             error: {
-                shortcode: "Shortcode already exists"
+                shortcode: ["Shortcode already exists"]
+                
             }
         };
     }
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
     return {
         message: "Page created",
     };
@@ -93,7 +93,7 @@ export async function createRedirectPage(prevState: any, fromData: FormData) {
         }
     });
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
 
     return {
         message: "URL created",
@@ -141,7 +141,7 @@ export async function deletePage(prevState: any, fromData: FormData) {
         }
     });
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
 
     return {
         message: "Page deleted",
@@ -178,7 +178,7 @@ export async function pinPageToRoot(prevState: any, fromData: FormData) {
         }
     });
 
-    revalidatePath("/dash");
+    revalidatePath("/~/dash");
     revalidatePath("/");
 
     return {
