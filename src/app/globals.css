@@ -2,17 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-
 body {
-  @apply text-gray-300 bg-gray-900
+  @apply text-gray-300 bg-gray-900;
 }
 
 h1 {
-  @apply text-5xl font-bold mb-6
+  @apply text-5xl font-bold mb-6;
 }
 
 h2 {
-  @apply text-2xl font-bold mb-4
+  @apply text-2xl font-bold mb-4;
 }
 
 .form-group {
@@ -44,13 +43,68 @@ label {
 }
 
 button {
-  @apply rounded bg-green-600 hover:bg-green-700 text-white py-2 px-4 disabled:opacity-50
+  @apply rounded bg-green-600 hover:bg-green-700 text-white py-2 px-4 disabled:opacity-50;
+}
+
+.button-icon {
+  @apply h-5 w-5 inline-block align-middle;
 }
 
 .zebra {
-  @apply odd:bg-slate-800 p-2 rounded
+  @apply odd:bg-slate-800 p-2 rounded;
 }
 
 .common-red {
-  @apply text-red-500
+  @apply text-red-500;
+}
+
+@keyframes slide-in {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-animated {
+  animation: slide-in 0.7s ease forwards;
+  opacity: 0;
+}
+
+@keyframes zoom-in {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.zoom-animated {
+  animation: zoom-in 1.5s ease forwards;
+  transform: scale(0.7);
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.fade-animated {
+  animation: fade-in 0.7s ease forwards;
+  opacity: 0;
+}
+
+.vcenter {
+  @apply flex items-center flex-col justify-center mt-5;
+  min-height: 80vh;
 }

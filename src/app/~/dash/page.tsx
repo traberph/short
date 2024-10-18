@@ -20,6 +20,7 @@ export default async function Dashboard() {
 
     const redirectPages = pages.filter((page) => page.redirectPage.length > 0);
     const customPages = pages.filter((page) => page.customPage.length > 0);
+    const pinnedPage = await prisma.pinnedPage.findFirst({ where: { id: 1 } });
 
     return (<>
         <h2>Redirect Pages</h2>

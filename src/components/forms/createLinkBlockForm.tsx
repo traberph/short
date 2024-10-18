@@ -1,7 +1,10 @@
 "use client"
 import { createLinkBlock } from "@/actions/block_actions"
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import SubmitButton from "../SubmitButton";
+import toast from "react-hot-toast";
+import { handleToast } from "@/utils";
+import { LinkIcon } from "@heroicons/react/24/solid";
 
 
 export default function CreateLinkBlockForm({ customPage, shortcodes }: { customPage: string, shortcodes: string[] }) {
@@ -12,6 +15,8 @@ export default function CreateLinkBlockForm({ customPage, shortcodes }: { custom
     };
 
     const [state, formAction] = useActionState(createLinkBlock, initialState);
+
+    useEffect(() => { handleToast(state); }, [state]);
 
     return (<form action={formAction}>
         <div className="form-group">
@@ -32,8 +37,7 @@ export default function CreateLinkBlockForm({ customPage, shortcodes }: { custom
             <p className="form-label-error">{state.error?.order}</p>
         </div>
         <input type="hidden" name="customPageUuid" value={customPage} />
-        <p className="mb-2">{state.message}</p>
-        <SubmitButton>add to page</SubmitButton>
+        <SubmitButton>add to page <LinkIcon className="ml-2 button-icon" /></SubmitButton>
 
     </form>
     );

@@ -1,8 +1,10 @@
 "use client"
 
 import { createRedirectPage } from "@/actions/page_actions";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import SubmitButton from "../SubmitButton";
+import toast from "react-hot-toast";
+import { handleToast } from "@/utils";
 
 export default function CreateRedirectPageForm() {
     const initialState = {
@@ -10,6 +12,8 @@ export default function CreateRedirectPageForm() {
         error: {}
     };
     const [state, formAction] = useActionState(createRedirectPage, initialState);
+
+    useEffect(() => { handleToast(state); }, [state]);
 
     return (
         <form action={formAction}>
@@ -23,7 +27,6 @@ export default function CreateRedirectPageForm() {
                 <input type='text' name='dest' id='dest' className={state.error?.dest ? "border-red-400" : ""} />
                 <p className="form-label-error">{state.error?.dest}</p>
             </div>
-            <p>{state.message}</p>
             <SubmitButton />
         </form>
     );

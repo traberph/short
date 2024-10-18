@@ -7,6 +7,7 @@ import CustomPageDashboard from "@/components/CustomPageDashboard";
 import LinkFavicon from "@/components/LinkFavicon";
 import { hashToColor } from "@/utils";
 import PinPageToRootForm from "@/components/forms/pinPageToRootForm";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
 
 interface PageProps {
     params: Promise<{
@@ -14,8 +15,8 @@ interface PageProps {
     }>
 }
 
-export default async function DetailedStats({ params } : PageProps) {
-    
+export default async function DetailedStats({ params }: PageProps) {
+
     const { uuid } = await params;
 
     const page = await prisma.page.findUnique({
@@ -87,13 +88,13 @@ export default async function DetailedStats({ params } : PageProps) {
                         <p><a className="underline" href={page.redirectPage[0].dest}>{page.redirectPage[0].dest}</a></p> : ""}
                 </div>
                 <div className="ml-5">
-                {page.pinnedPage ? <p className="common-red">Pinned to root</p> : ""}
+                    {page.pinnedPage ? <p className="common-red">Pinned to root</p> : ""}
                 </div>
                 <div className="ml-auto">
-                    <Link href={`/${page.shortcode}`}><button>View</button></Link>
+                    <Link href={`/${page.shortcode}`}><button><ArrowTopRightOnSquareIcon className="button-icon" /></button></Link>
                 </div>
                 <div className="ml-5">
-                    <PinPageToRootForm pageUuid={page.uuid} disabled={!!page.pinnedPage} />
+                    <PinPageToRootForm pageUuid={page.uuid} pinned={!!page.pinnedPage} />
                 </div>
                 <div className="ml-5">
                     <DeletePageForm uuid={page.uuid} />

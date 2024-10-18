@@ -1,8 +1,9 @@
 "use server"
 
-import { z } from "zod";
+import { set, z } from "zod";
 import prisma from "../../prisma/prisma";
 import { revalidatePath } from "next/cache";
+import toast from "react-hot-toast";
 
 export async function createLinkBlock(prevState: any, formData: FormData) {
 
@@ -63,7 +64,7 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
         });
     } catch (e: any) {
         return {
-            message: "Error creating link block",
+            message: "Error adding link to page",
             error: e.message
         };
     }
@@ -73,7 +74,7 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
     revalidatePath(`/${customPage.page.shortcode}`);
 
     return {
-        message: "Link block created"
+        message: "Adding link to page"
     };
 }
 
@@ -93,16 +94,22 @@ export async function deleteLinkBlock(prevState: any, formData: FormData) {
         };
     }
 
-    await prisma.linkBlock.delete({
-        where: {
-            uuid: data.data.uuid
-        }
-    });
+    try {
+        await prisma.linkBlock.delete({
+            where: {
+                uuid: data.data.uuid
+            }
+        });
+    } catch (e: any) {
+        return {
+            message: "Cant delete link from page",
+        };
+    }
 
     revalidatePath("/~/dash");
 
     return {
-        message: "Link block deleted"
+        message: "Removed link from page"
     };
 }
 

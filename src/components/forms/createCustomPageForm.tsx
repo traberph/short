@@ -1,7 +1,8 @@
 "use client"
 import { createCustomPage } from "@/actions/page_actions";
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import SubmitButton from "../SubmitButton";
+import { handleToast } from "@/utils";
 
 
 export default function CreateCustomPageForm() {
@@ -12,6 +13,8 @@ export default function CreateCustomPageForm() {
     };
 
     const [state, formAction] = useActionState(createCustomPage, initialState);
+
+    useEffect(() => { handleToast(state); }, [state]);
 
     return (
         <form action={formAction}>

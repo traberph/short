@@ -1,4 +1,6 @@
-export function hashToColor(hash: string|null): string {
+import toast from "react-hot-toast";
+
+export function hashToColor(hash: string | null): string {
     if (!hash) {
         return "black";
     }
@@ -7,4 +9,15 @@ export function hashToColor(hash: string|null): string {
     const b = parseInt(hash.slice(4, 6), 16);
     const color = `rgb(${r}, ${g}, ${b})`;
     return color;
+}
+
+export function handleToast(state: { message: string, error?: any }) {
+    if (state.message) {
+        console.log(state);
+        if (state.error) {
+            toast.error(state.message);
+        } else {
+            toast.success(state.message);
+        }
+    }
 }

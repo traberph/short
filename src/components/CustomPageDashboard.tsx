@@ -2,6 +2,7 @@ import { CustomPage } from "@prisma/client"
 import prisma from "../../prisma/prisma"
 import CreateLinkBlockForm from "./forms/createLinkBlockForm"
 import DeleteLinkBlockForm from "./forms/deleteLinkBlockForm"
+import { ArrowTopRightOnSquareIcon, ArrowTrendingUpIcon, ArrowUpCircleIcon, ArrowUpRightIcon } from "@heroicons/react/24/solid"
 
 export default async function CustomPageDashboard(params: { customPage: CustomPage }) {
 
@@ -30,12 +31,12 @@ export default async function CustomPageDashboard(params: { customPage: CustomPa
                 <div>connected link page: <span className="font-bold">{block.redirectPage.page.shortcode}</span></div>
                 <div className="ml-auto">
                     <button>
-                        <a href={`/${block.redirectPage.page.shortcode}`} className="btn btn-primary">Visit</a>
+                        <a href={`/${block.redirectPage.page.shortcode}`} className="btn btn-primary"><ArrowTopRightOnSquareIcon className="button-icon" /></a>
                     </button>
                 </div>
                 <div className="ml-5">
                     <button>
-                        <a href={`/~/dash/${block.redirectPage.page.uuid}`} className="btn btn-primary">Details</a>
+                        <a href={`/~/dash/${block.redirectPage.page.uuid}`} className="btn btn-primary"><ArrowTrendingUpIcon className="button-icon" /></a>
                     </button>
                 </div>
                 <div className="ml-5">

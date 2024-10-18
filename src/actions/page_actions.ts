@@ -49,7 +49,7 @@ export async function createCustomPage(prevState: any, fromData: FormData) {
             message: "Shortcode already exists",
             error: {
                 shortcode: ["Shortcode already exists"]
-                
+
             }
         };
     }
@@ -149,13 +149,16 @@ export async function deletePage(prevState: any, fromData: FormData) {
 
 }
 
+
 export async function pinPageToRoot(prevState: any, fromData: FormData) {
     const schema = z.object({
-        uuid: z.string().uuid()
+        uuid: z.string().uuid(),
+        unpin: z.enum(['true', 'false']).transform((value) => value === 'true').optional()
     });
 
     const data = schema.safeParse({
-        uuid: fromData.get("uuid")
+        uuid: fromData.get("uuid"),
+        unpin: fromData.get("unpin")
     });
 
     if (!data.success) {
@@ -165,24 +168,43 @@ export async function pinPageToRoot(prevState: any, fromData: FormData) {
         };
     }
 
-    await prisma.pinnedPage.upsert({
-        where: {
-            id: 1
-        },
-        update: {
-            pageUuid: data.data.uuid
-        },
-        create: {
-            id: 1,
-            pageUuid: data.data.uuid
-        }
-    });
 
-    revalidatePath("/~/dash");
-    revalidatePath("/");
 
-    return {
-        message: "Page pinned",
-    };
+    console.log(data.data.unpin);
+    if (data.data.unpin) {
+
+        console.log
+
+        await prisma.pinnedPage.delete({
+            where: {
+                id: 1
+            }
+        });
+        revalidatePath("/~/dash");
+        revalidatePath("/");
+        return {
+            message: "Page unpinned",
+        };
+    } else {
+        await prisma.pinnedPage.upsert({
+            where: {
+                id: 1
+            },
+            update: {
+                pageUuid: data.data.uuid
+            },
+            create: {
+                id: 1,
+                pageUuid: data.data.uuid
+            }
+        });
+
+        revalidatePath("/~/dash");
+        revalidatePath("/");
+
+        return {
+            message: "Page pinned",
+        };
+    }
 
 }
