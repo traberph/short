@@ -20,12 +20,13 @@ export default async function Dashboard({ children }: { children: ReactNode }) {
 
     return (
         <div className='p-10 max-w-7xl mx-auto'>
-            <div className='flex justify-top'>
+            <div className='flex justify-between max-sm:flex-col mb-10'>
 
                 <Link href="/~/dash/">
                     <h1>Dashboard</h1>
                 </Link>
-                <div className="ml-auto flex flex-col">
+
+                <div className="flex flex-col max-sm:mt-5 justify-start">
                     {user?.name ? <>
                         <div>{user?.name || user.email}</div>
                         <SignOutButton /></> : ""}

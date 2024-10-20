@@ -8,6 +8,7 @@ import LinkFavicon from "@/components/LinkFavicon";
 import { hashToColor } from "@/utils";
 import PinPageToRootForm from "@/components/forms/pinPageToRootForm";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
+import QRCode from "@/components/QRCode";
 
 interface PageProps {
     params: Promise<{
@@ -68,7 +69,8 @@ export default async function DetailedStats({ params }: PageProps) {
 
     return (
         <div>
-            <div className="flex items-center">
+            <div className="flex justify-between max-sm:flex-col mb-10">
+                <div className="flex">
                 {redirectPage || customPage.image ?
                     <div className=" h-10 w-10  mr-4 ">
                         {redirectPage ? <LinkFavicon url={redirectPage.dest} /> :
@@ -90,8 +92,12 @@ export default async function DetailedStats({ params }: PageProps) {
                 <div className="ml-5">
                     {page.pinnedPage ? <p className="common-red">Pinned to root</p> : ""}
                 </div>
-                <div className="ml-auto">
-                    <Link href={`/${page.shortcode}`}><button><ArrowTopRightOnSquareIcon className="button-icon" /></button></Link>
+                </div>
+
+                <div className="flex max-sm:mt-5">
+
+                <div className="">
+                    <Link href={`/${page.shortcode}`} target="blank"><button><ArrowTopRightOnSquareIcon className="button-icon" /></button></Link>
                 </div>
                 <div className="ml-5">
                     <PinPageToRootForm pageUuid={page.uuid} pinned={!!page.pinnedPage} />
@@ -99,18 +105,20 @@ export default async function DetailedStats({ params }: PageProps) {
                 <div className="ml-5">
                     <DeletePageForm uuid={page.uuid} />
                 </div>
+
+                </div>
             </div>
-            <br className="mt-2"></br>
+            <div className="mb-10"> 
+                <QRCode url={page.shortcode} />
+            </div>
 
             {customPage ? <CustomPageDashboard customPage={customPage} /> : ""}
 
-            <h2 className="mt-5">Stats</h2>
-            <p className="mt-5">All visits (not unique): {page._count.stat}</p>
-            <br></br>
-            <h2>Visitors</h2>
+            <h2 className="mt-10">Visitors</h2>
+            <p className="my-2">All visits (not unique): {page._count.stat}</p>
+
             {stats.map((stat) => (<div className="zebra" key={stat.hash}>
-                <p>{stat.userAgent}</p>
-                <p style={{ color: hashToColor(stat.hash) }}>{stat.hash}</p>
+                <p style={{ color: hashToColor(stat.hash) }}>{stat.userAgent}</p>
                 <p>Visits: {"" + stat._count.uuid}</p>
                 <p>Last Visit: {stat._max.accessedAt?.toDateString()}</p>
             </div>))}

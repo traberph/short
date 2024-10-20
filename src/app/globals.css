@@ -7,11 +7,11 @@ body {
 }
 
 h1 {
-  @apply text-5xl font-bold mb-6;
+  @apply text-5xl font-bold;
 }
 
 h2 {
-  @apply text-2xl font-bold mb-4;
+  @apply text-2xl font-bold;
 }
 
 .form-group {
@@ -51,7 +51,7 @@ button {
 }
 
 .zebra {
-  @apply odd:bg-slate-800 p-2 rounded;
+  @apply even:bg-slate-800 p-2 rounded;
 }
 
 .common-red {

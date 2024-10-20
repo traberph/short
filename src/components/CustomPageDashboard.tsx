@@ -23,6 +23,7 @@ export default async function CustomPageDashboard(params: { customPage: CustomPa
     });
 
     return (<>
+        <h2>Links on Page</h2>
         {linkBlocks.map((block) => (
 
             <div key={block.uuid} className="flex items-center justify-center mb-2 zebra">
@@ -44,7 +45,7 @@ export default async function CustomPageDashboard(params: { customPage: CustomPa
                 </div>
             </div>
         ))}
-        <h2>Add new link page connection</h2>
+        <h2 className="mt-10">Add new link page connection</h2>
         <CreateLinkBlockForm customPage={customPage.uuid} shortcodes={shortcodes || []} />
 
     </>
