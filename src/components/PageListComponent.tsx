@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import LinkFavicon from './LinkFavicon';
 import PinPageToRootForm from './forms/pinPageToRootForm';
+import { BookmarkIcon } from '@heroicons/react/24/solid';
 
 type PageWithRelations = Prisma.PageGetPayload<{
     include: {
@@ -24,9 +25,11 @@ export default async function PageListComponent({ page }: { page: PageWithRelati
 
     return (
         <Link href={`/~/dash/${page.uuid}`}>
-            <div className="w-full my-3 flex items-center hover:bg-slate-600 rounded p-1">
-                <div className="flex-shrink-0 h-8 w-8 flex items-center justify-center mr-4">
-                    {redirectPage ? <LinkFavicon url={redirectPage.dest} /> :
+            <div className='flex justify-between items-center hover:bg-slate-700 my-2 p-1 rounded'>
+                <div className='flex items-center'>
+                    <div className='w-8 h-8'>
+                    {redirectPage ?
+                        <LinkFavicon url={redirectPage.dest} /> :
                         <Image
                             loading='lazy'
                             width={100}
@@ -35,19 +38,17 @@ export default async function PageListComponent({ page }: { page: PageWithRelati
                             alt="icon"
                             className="rounded-full"
                         />}
+                    </div>
+                    <div className='ml-3'>
+                        <p className="font-bold text-lg text-white">{page.shortcode}</p>
+                        <p className="text-sm text-gray-400">{redirectPage ? redirectPage.dest : customPage.title}</p>
+                    </div>
+                    <div className="ml-5">
+                        {page.pinnedPage ? <BookmarkIcon className='button-icon common-red'/> : ""}
+                    </div>
                 </div>
                 <div>
-                    <p className="font-bold text-lg text-white">{page.shortcode}</p>
-                    <p className="text-sm text-gray-400">{redirectPage ? redirectPage.dest : customPage.title}</p>
-
-                </div>
-                <div className="ml-5">
-                    {page.pinnedPage ? <p className="text-red-500">Pinned to root</p> : ""}
-                </div>
-                <div className="ml-auto">
-                    {page._count.stat ? <p className="text-gray-400 font-bold">{page._count.stat} visits</p> : ""}
-                    {//<DeletePageForm uuid={page.uuid} />
-                    }
+                    {page._count.stat ? <p className="text-gray-400 font-bold text-right">{page._count.stat} visits</p> : ""}
                 </div>
             </div>
         </Link>

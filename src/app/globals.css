@@ -19,11 +19,11 @@ h2 {
 }
 
 .form-field-error {
-  @apply border-red-500;
+  @apply common-red;
 }
 
 .form-label-error {
-  @apply text-red-500;
+  @apply common-red;
 }
 
 form {
@@ -51,11 +51,11 @@ button {
 }
 
 .zebra {
-  @apply even:bg-slate-800 p-2 rounded;
+  @apply even:bg-slate-800 p-2 py-5 rounded;
 }
 
 .common-red {
-  @apply text-red-500;
+  @apply text-red-800;
 }
 
 @keyframes slide-in {

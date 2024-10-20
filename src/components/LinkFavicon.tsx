@@ -4,7 +4,7 @@ export default function LinkFavicon({ url }: { url: string }) {
 
     const hostname = new URL(url).hostname;
 
-    return (<div className=" h-10 w-10">
+    return (
         <Image
             src={`https://logo.clearbit.com/${hostname}?`}
             width={100}
@@ -12,6 +12,5 @@ export default function LinkFavicon({ url }: { url: string }) {
             alt=" "
             className="rounded-full"
         />
-    </div>
     );
 }

@@ -24,7 +24,7 @@ export default function QRCode({ url }: { url: string }) {
                         {values.map((value, index) => (
                             <span
                                 key={index}
-                                className={`mx-2 ${errorCorrectionLevel === index ? 'text-white' : 'text-gray-400'}`}
+                                className={`cursor-pointer mx-2 ${errorCorrectionLevel === index ? 'text-white' : 'text-gray-400'}`}
                                 onClick={() => setErrorCorrectionLevel(index)}>
                                 {value}
                             </span>

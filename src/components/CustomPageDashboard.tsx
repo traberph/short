@@ -23,24 +23,22 @@ export default async function CustomPageDashboard(params: { customPage: CustomPa
     });
 
     return (<>
-        <h2>Links on Page</h2>
+        <h2 className="mb-5">Links on Page</h2>
         {linkBlocks.map((block) => (
 
-            <div key={block.uuid} className="flex items-center justify-center mb-2 zebra">
-                <div className="mr-5">order: {block.order}</div>
-                <div className="mr-5">title: <span className="font-bold">{block.title}</span></div>
-                <div>connected link page: <span className="font-bold">{block.redirectPage.page.shortcode}</span></div>
-                <div className="ml-auto">
+            <div key={block.uuid} className="flex items-center justify-between zebra max-sm:flex-col max-sm:items-start">
+                <div className="flex">
+                    <div className="mr-5">order: {block.order}</div>
+                    <div className="mr-5">title: <span className="font-bold">{block.title}</span></div>
+                    <div>link page: <span className="font-bold">{block.redirectPage.page.shortcode}</span></div>
+                </div>
+                <div className="flex max-sm:mt-3 max-sm:w-full max-sm:justify-between">
                     <button>
                         <a href={`/${block.redirectPage.page.shortcode}`} className="btn btn-primary"><ArrowTopRightOnSquareIcon className="button-icon" /></a>
                     </button>
-                </div>
-                <div className="ml-5">
-                    <button>
+                    <button className="ml-3">
                         <a href={`/~/dash/${block.redirectPage.page.uuid}`} className="btn btn-primary"><ArrowTrendingUpIcon className="button-icon" /></a>
                     </button>
-                </div>
-                <div className="ml-5">
                     <DeleteLinkBlockForm linkBlockUuid={block.uuid} />
                 </div>
             </div>

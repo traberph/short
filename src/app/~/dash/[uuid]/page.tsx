@@ -7,7 +7,7 @@ import CustomPageDashboard from "@/components/CustomPageDashboard";
 import LinkFavicon from "@/components/LinkFavicon";
 import { hashToColor } from "@/utils";
 import PinPageToRootForm from "@/components/forms/pinPageToRootForm";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
+import { ArrowTopRightOnSquareIcon, BookmarkIcon } from "@heroicons/react/24/solid";
 import QRCode from "@/components/QRCode";
 
 interface PageProps {
@@ -90,7 +90,7 @@ export default async function DetailedStats({ params }: PageProps) {
                         <p><a className="underline" href={page.redirectPage[0].dest}>{page.redirectPage[0].dest}</a></p> : ""}
                 </div>
                 <div className="ml-5">
-                    {page.pinnedPage ? <p className="common-red">Pinned to root</p> : ""}
+                    {page.pinnedPage ? <BookmarkIcon className="button-icon common-red"/> : ""}
                 </div>
                 </div>
 

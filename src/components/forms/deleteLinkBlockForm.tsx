@@ -17,7 +17,7 @@ export default function DeleteLinkBlockForm({ linkBlockUuid }: { linkBlockUuid: 
 
     useEffect(() => { handleToast(state); }, [state]);
 
-    return (<form action={formAction}>
+    return (<form action={formAction} className="ml-3 w-min">
         <input type="hidden" name="uuid" id="uuid" value={linkBlockUuid} />
         <SubmitButton>
             <LinkSlashIcon className="button-icon" />

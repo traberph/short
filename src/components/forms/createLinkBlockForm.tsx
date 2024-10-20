@@ -18,7 +18,7 @@ export default function CreateLinkBlockForm({ customPage, shortcodes }: { custom
 
     useEffect(() => { handleToast(state); }, [state]);
 
-    return (<form action={formAction}>
+    return (<form action={formAction} className="mt-5">
         <div className="form-group">
             <label htmlFor="redirectPageShortcode">Redirect Page</label>
             <select name="redirectPageShortcode" id="redirectPageShortcode" className={state.error?.redirectPageShortcode ? "border-red-400" : ""}>

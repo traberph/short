@@ -15,7 +15,7 @@ export default async function AdminRoot() {
 
     return (<div className="vcenter">
 
-        <Link href="https://github.com/traberph/short"><h1>traberph/short</h1></Link>
+        <Link href="https://github.com/traberph/short"><h1 className="my-5">traberph/short</h1></Link>
         <SignInButton />
         <Link href="/" className="mt-3 hover:underline">or back to root</Link>
     </div>
