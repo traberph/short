@@ -28,7 +28,7 @@ export default async function CustomPageComponent(params: { customPage: CustomPa
         className="rounded-full zoom-animated"
       />
 
-      <h1 className="mt-5 text-center zoom-animated">{customPage.title}</h1>
+      <h1 className="my-10 text-center zoom-animated">{customPage.title}</h1>
       <div className="w-full max-w-96 p-2">
 
         {linkBlocks.map((block, index) => (
@@ -39,7 +39,7 @@ export default async function CustomPageComponent(params: { customPage: CustomPa
           >
             <a href={`/${block.redirectPage.page.shortcode}`}>
               <div className="relative flex items-center">
-                <div className="flex-shrink-0"><LinkFavicon url={block.redirectPage.dest} /></div>
+                <div className="flex-shrink-0 w-8 h-8"><LinkFavicon url={block.redirectPage.dest} /></div>
                 <div className="absolute left-1/2 transform -translate-x-1/2 text-center font-bold">{block.title}</div>
               </div>
             </a>
