@@ -208,3 +208,32 @@ export async function pinPageToRoot(prevState: any, fromData: FormData) {
     }
 
 }
+
+export async function deletePageStats(prevState: any, formData: FormData) {
+    const schema = z.object({
+        uuid: z.string().uuid()
+    });
+
+    const data = schema.safeParse({
+        uuid: formData.get("uuid")
+    });
+
+    if (!data.success) {
+        return {
+            message: "Invalid data",
+            error: data.error.flatten().fieldErrors,
+        };
+    }
+
+    await prisma.stat.deleteMany({
+        where: {
+            pageUuid: data.data.uuid
+        }
+    });
+
+    revalidatePath(`/~/dash/${data.data.uuid}`);
+
+    return {
+        message: "Stats deleted",
+    };
+}
