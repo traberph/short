@@ -3,31 +3,33 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@heroicons/react": "^2.1.5",
-    "@prisma/client": "^5.18.0",
+    "@hello-pangea/dnd": "^18.0.1",
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.5.0",
     "js-sha256": "^0.11.0",
-    "next": "^15.0.0-canary.195",
-    "next-auth": "^5.0.0-beta.22",
+    "next": "^15.2.4",
+    "next-auth": "^5.0.0-beta.25",
     "next-qrcode": "^2.5.1",
-    "react-hot-toast": "^2.4.1",
-    "ua-parser-js": "^1.0.38",
-    "zod": "^3.23.8"
+    "react-hot-toast": "^2.5.2",
+    "ua-parser-js": "^2.0.3",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.17",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "14.2.6",
-    "postcss": "^8",
-    "prisma": "^5.18.0",
-    "tailwindcss": "^3.4.1",
+    "eslint-config-next": "14.1.0",
+    "postcss": "^8.5.3",
+    "prisma": "^6.5.0",
+    "tailwindcss": "^4.0.17",
     "typescript": "^5"
   }
 }

@@ -1,6 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@utility common-red {
+    @apply text-red-800;
+}
 
 body {
   @apply text-gray-300 bg-gray-900;
@@ -54,9 +56,6 @@ button {
   @apply even:bg-slate-800 p-2 py-5 rounded;
 }
 
-.common-red {
-  @apply text-red-800;
-}
 
 @keyframes slide-in {
   0% {
