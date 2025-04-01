@@ -31,11 +31,7 @@ export default function CreateLinkBlockForm({ customPage, shortcodes }: { custom
             <input type="text" name="title" id="title" className={state.error?.title ? "border-red-400" : ""} />
             <p className="form-label-error">{state.error?.title}</p>
         </div>
-        <div className="form-group">
-            <label htmlFor="order">Order</label>
-            <input defaultValue={1} type="number" name="order" id="order" className={state.error?.order ? "border-red-400" : ""} />
-            <p className="form-label-error">{state.error?.order}</p>
-        </div>
+        <input type="hidden" name="order" value="1" />
         <input type="hidden" name="customPageUuid" value={customPage} />
         <SubmitButton>add to page <LinkIcon className="ml-2 button-icon" /></SubmitButton>
 

@@ -67,6 +67,19 @@ export default async function DetailedStats({ params }: PageProps) {
     const linkPages = customPage ? await prisma.redirectPage.findMany({ include: { page: true } }) : undefined
     const shortcodes = linkPages ? linkPages.map((p) => p.page.shortcode) : undefined
 
+    // get link blocks if the page is a custom page
+    const linkBlocks = customPage ? await prisma.linkBlock.findMany({
+        where: {
+            customPageUuid: customPage.uuid
+        },
+        orderBy: {
+            order: "asc"
+        },
+        include: {
+            redirectPage: { include: { page: true } }
+        }
+    }) : undefined;
+
     return (
         <div>
             <div className="flex justify-between max-sm:flex-col mb-10">
@@ -112,7 +125,7 @@ export default async function DetailedStats({ params }: PageProps) {
                 <QRCode url={page.shortcode} />
             </div>
 
-            {customPage ? <CustomPageDashboard customPage={customPage} /> : ""}
+            {customPage ? <CustomPageDashboard customPage={customPage} linkBlocks={linkBlocks || []} shortcodes={shortcodes || []} /> : ""}
 
             <h2 className="mt-10">Visitors</h2>
             <p className="my-2">All visits (not unique): {page._count.stat}</p>

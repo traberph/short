@@ -30,7 +30,8 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
     const customPage = await prisma.customPage.findUnique({
         where: { uuid: data.data.customPageUuid },
         include: {
-            page: true
+            page: true,
+            linkBlock: true
         }
     });
     if (!customPage) {
@@ -53,12 +54,15 @@ export async function createLinkBlock(prevState: any, formData: FormData) {
     }
 
     try {
+        const currentLinkCount = customPage.linkBlock.length;
+        const newOrder = currentLinkCount + 1;
+
         await prisma.linkBlock.create({
             data: {
                 customPageUuid: data.data.customPageUuid,
                 redirectPageUuid: redirectPage?.uuid,
                 title: data.data.title,
-                order: data.data.order
+                order: newOrder
             }
         });
     } catch (e: any) {
@@ -109,6 +113,77 @@ export async function deleteLinkBlock(prevState: any, formData: FormData) {
 
     return {
         message: "Removed link from page"
+    };
+}
+
+export async function updateLinkBlockOrder(prevState: any, formData: FormData) {
+    const schema = z.object({
+        linkBlockUuid: z.string().uuid(),
+        newOrder: z.coerce.number()
+    });
+
+    const data = schema.safeParse({
+        linkBlockUuid: formData.get("linkBlockUuid"),
+        newOrder: formData.get("newOrder")
+    });
+
+    if (!data.success) {
+        return {
+            message: "Invalid data",
+            error: data.error.flatten().fieldErrors,
+        };
+    }
+
+    try {
+        // Get the link block being moved
+        const movedLinkBlock = await prisma.linkBlock.findUnique({
+            where: { uuid: data.data.linkBlockUuid },
+            include: { customPage: true }
+        });
+
+        if (!movedLinkBlock) {
+            return {
+                message: "Link block not found",
+                error: {}
+            };
+        }
+
+        // Get all link blocks for this custom page ordered by their current order
+        const allLinkBlocks = await prisma.linkBlock.findMany({
+            where: { customPageUuid: movedLinkBlock.customPageUuid },
+            orderBy: { order: "asc" }
+        });
+
+        // Find the current index of the moved block
+        const currentIndex = allLinkBlocks.findIndex(block => block.uuid === data.data.linkBlockUuid);
+        
+        // Create a new array with the block moved to its new position
+        const reorderedBlocks = [...allLinkBlocks];
+        const [movedBlock] = reorderedBlocks.splice(currentIndex, 1);
+        reorderedBlocks.splice(data.data.newOrder - 1, 0, movedBlock);
+
+        // Update orders based on the new positions
+        const updates = reorderedBlocks.map((block, index) => {
+            return prisma.linkBlock.update({
+                where: { uuid: block.uuid },
+                data: { order: index + 1 }
+            });
+        });
+
+        // Execute all updates in a transaction
+        await prisma.$transaction(updates);
+    } catch (e: any) {
+        return {
+            message: "Error updating link order",
+            error: e.message
+        };
+    }
+
+    revalidatePath("/~/dash");
+    revalidatePath(`/~/dash/${data.data.linkBlockUuid}/page`);
+
+    return {
+        message: "Link order updated"
     };
 }
 
