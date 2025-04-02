@@ -6,6 +6,9 @@ import LinkFavicon from "./LinkFavicon";
 export default async function CustomPageComponent(params: { customPage: CustomPage }) {
   const customPage = params.customPage;
 
+  const token = process.env.LOGO_DEV_TOKEN;
+  const disableAttribution = process.env.DISABLE_ATTRIBUTION;
+
   const linkBlocks = await prisma.linkBlock.findMany({
     where: {
       customPageUuid: customPage.uuid
@@ -50,7 +53,9 @@ export default async function CustomPageComponent(params: { customPage: CustomPa
         className="text-slate-700 mt-10 fade-animated"
         style={{ animationDelay: `${1.5 + linkBlocks.length * 0.1}s`, opacity: 0 }}
       >
-        <a className="underline" target="blank" href="https://github.com/traberph/short">traberph/short</a> by me running on <a className="underline" href="https://k3s.io/" target="blank">K3s</a>
+
+        {disableAttribution ? null : <p className="text-center">powered by <a className="underline" target="blank" href="https://github.com/traberph/short">traberph/short</a></p>}
+        {token ? <p className="text-center">Logos provided by <a className="underline" href="https://logo.dev" alt="Logo API">Logo.dev</a></p> : ""}
       </div>
     </div>
   );
