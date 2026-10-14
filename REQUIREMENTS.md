@@ -19,7 +19,8 @@ authenticated against an existing Authentik instance.
 ## Links
 - **R7** The shortcode is either typed in or, if left empty, randomly generated (5 characters).
 - **R8** Destinations must be `http(s)://`. Reserved codes are blocked.
-- **R9** Destinations can be edited. Links use 302 redirects.
+- **R9** Destinations and shortcodes can be edited. Renaming a shortcode breaks the old URL, so the UI asks for
+  confirmation. Links use 302 redirects.
 - **R10** Deleting a link removes its stats and its buttons on link pages, in one transaction.
 - **R11** An admin can pin the root `/` to any page.
 

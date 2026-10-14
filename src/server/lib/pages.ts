@@ -106,6 +106,9 @@ export function updatePage(db: Db, actor: Actor, id: number, input: UpdatePageIn
   if ((input.title !== undefined || input.theme !== undefined) && page.kind !== "linkpage") {
     throw new HttpError(400, "Only link pages have a title and theme");
   }
+  if (input.code !== undefined && input.code !== page.code && codeTaken(db, page.namespace, input.code)) {
+    throw new HttpError(409, "Shortcode is not available", { code: ["Already in use or reserved"] });
+  }
   db.update(pages)
     .set({ ...input, updatedAt: new Date() })
     .where(eq(pages.id, id))

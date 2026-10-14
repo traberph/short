@@ -134,6 +134,37 @@ describe("namespaces and permissions", () => {
     expect(await (await admin.api("GET", "/conflicts")).json()).toEqual([{ username: "carol", pageId: expect.any(Number) }]);
   });
 
+  it("renames shortcodes and keeps stats and link buttons", async () => {
+    const { app, user } = setup();
+    user("bob");
+    const alice = user("alice");
+    const admin = user("root", true);
+
+    const link = await (await alice.api("POST", "/pages", { kind: "redirect", code: "old", dest: "https://a.test" })).json();
+    await alice.api("POST", "/pages", { kind: "redirect", code: "taken", dest: "https://b.test" });
+    const page = await (await alice.api("POST", "/pages", { kind: "linkpage", code: "me", title: "Alice" })).json();
+    await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", targetId: link.id, label: "A" });
+    await app.request("/alice/old");
+    await flush();
+
+    expect((await alice.api("PATCH", `/pages/${link.id}`, { code: "taken" })).status).toBe(409);
+    expect((await alice.api("PATCH", `/pages/${link.id}`, { code: "bad code" })).status).toBe(400);
+    expect((await user("eve").api("PATCH", `/pages/${link.id}`, { code: "x" })).status).toBe(404);
+
+    const renamed = await alice.api("PATCH", `/pages/${link.id}`, { code: "new" });
+    expect((await renamed.json()).path).toBe("/alice/new");
+    expect((await app.request("/alice/old")).status).toBe(404);
+    expect((await app.request("/alice/new")).headers.get("location")).toBe("https://a.test");
+    expect((await (await alice.api("GET", `/pages/${link.id}/stats`)).json()).total).toBe(1);
+    expect((await (await alice.api("GET", `/pages/${page.id}`)).json()).blocks[0].target.path).toBe("/alice/new");
+
+    // Root renames follow the same reserved-code and username rules as creating.
+    const root = await (await admin.api("POST", "/pages", { kind: "redirect", namespace: "", code: "r", dest: "https://r.test" })).json();
+    expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "api" })).status).toBe(409);
+    expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "bob" })).status).toBe(409);
+    expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "r" })).status).toBe(200);
+  });
+
   it("restricts admin-only endpoints", async () => {
     const { user } = setup();
     const alice = user("alice");
