@@ -62,6 +62,8 @@ export const createPageSchema = z.discriminatedUnion("kind", [
 export type CreatePageInput = z.infer<typeof createPageSchema>;
 
 export const updatePageSchema = z.object({
+  // Renaming breaks the old URL; the admin UI asks for confirmation first.
+  code: codeSchema.optional(),
   dest: destSchema.optional(),
   title: titleSchema.optional(),
   theme: themeSchema.optional(),

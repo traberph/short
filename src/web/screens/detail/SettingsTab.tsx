@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Pin, PinOff, Trash2 } from "lucide-react";
 import type { Me, PageDetail } from "../../../shared/api-types.js";
-import { api } from "../../api.js";
+import { api, ApiRequestError, errorMessage } from "../../api.js";
 import { Button } from "../../components/ui/button.js";
 import { useConfirm } from "../../components/ui/dialog.js";
-import { Field, Input } from "../../components/ui/form.js";
+import { Field, Input, PrefixInput } from "../../components/ui/form.js";
 import { CopyButton, publicUrl } from "../../components/ui/misc.js";
-import { Card, CardBody, CardFooter, CardHeader } from "../../components/ui/surface.js";
-import { useAction } from "../../components/ui/toast.js";
+import { Alert, Card, CardBody, CardFooter, CardHeader } from "../../components/ui/surface.js";
+import { useAction, useToast } from "../../components/ui/toast.js";
 import { listPath, navigate } from "../../router.js";
 
 function DestinationCard({ page, onChange }: { page: PageDetail; onChange: (page: PageDetail) => void }) {
@@ -28,6 +28,93 @@ function DestinationCard({ page, onChange }: { page: PageDetail; onChange: (page
         <CardFooter>
           <Button type="submit" loading={busy} disabled={dest === page.dest}>
             Save
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+function AddressCard({ page, onChange }: { page: PageDetail; onChange: (page: PageDetail) => void }) {
+  const [code, setCode] = useState(page.code);
+  const [error, setError] = useState<string | undefined>();
+  const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
+  const toast = useToast();
+
+  const prefix = page.namespace ? `/${page.namespace}/` : "/";
+  const newPath = `${prefix}${code.trim()}`;
+  const changed = code.trim() !== page.code;
+
+  const rename = async () => {
+    const ok = await confirm({
+      title: "Change the address?",
+      description: (
+        <span className="flex flex-col gap-3">
+          <span>
+            <span className="font-mono">{page.path}</span> stops working immediately. Shared links, bookmarks and printed QR codes
+            that use it will show a "not found" page.
+          </span>
+          <span>
+            New address: <span className="font-mono text-fg">{newPath}</span>
+          </span>
+        </span>
+      ),
+      confirmLabel: "Change address",
+      danger: true,
+    });
+    if (!ok) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      onChange(await api<PageDetail>("PATCH", `/pages/${page.id}`, { code: code.trim() }));
+      toast(`Address changed to ${newPath}`);
+    } catch (err) {
+      setError(err instanceof ApiRequestError && err.issues?.code ? err.issues.code.join(", ") : errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void rename();
+        }}
+      >
+        <CardHeader title="Address" description="The public URL of this page." actions={<CopyButton value={publicUrl(page.path)} label="Copy" />} />
+        <CardBody className="flex flex-col gap-4">
+          <Field label="Shortcode" error={error}>
+            {(id) => (
+              <PrefixInput
+                id={id}
+                prefix={prefix}
+                required
+                pattern="[A-Za-z0-9][A-Za-z0-9_\-]{0,63}"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  setError(undefined);
+                }}
+              />
+            )}
+          </Field>
+          {changed && (
+            <Alert title="Changing the shortcode breaks the current URL">
+              <span className="font-mono">{page.path}</span> will stop working, including QR codes you've already shared or printed.
+            </Alert>
+          )}
+        </CardBody>
+        <CardFooter>
+          {changed && (
+            <Button variant="secondary" onClick={() => setCode(page.code)}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" variant={changed ? "danger" : "primary"} loading={busy} disabled={!changed || !code.trim()}>
+            Change address
           </Button>
         </CardFooter>
       </form>
@@ -74,13 +161,7 @@ export function SettingsTab({
     <div className="flex max-w-3xl flex-col gap-6">
       {page.kind === "redirect" && <DestinationCard page={page} onChange={onChange} />}
 
-      <Card>
-        <CardHeader title="Address" description="Shortcodes can't be changed. Create a new one if you need a different address." />
-        <CardBody className="flex items-center gap-2">
-          <code className="flex-1 truncate rounded-lg bg-surface-2 px-3 py-2 font-mono text-sm">{publicUrl(page.path)}</code>
-          <CopyButton value={publicUrl(page.path)} label="Copy" />
-        </CardBody>
-      </Card>
+      <AddressCard key={page.code} page={page} onChange={onChange} />
 
       {me.isAdmin && (
         <Card>
