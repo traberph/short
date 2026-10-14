@@ -51,7 +51,7 @@ export function OverviewScreen({ me }: { me: Me }) {
   const links = all.filter((p) => p.kind === "redirect");
   const linkPages = all.filter((p) => p.kind === "linkpage");
   const clicks = all.reduce((sum, p) => sum + p.totalClicks, 0);
-  const scope = me.isAdmin ? "across all namespaces" : `in /${me.username}/`;
+  const scope = me.isAdmin ? "all users" : `in /${me.username}/`;
 
   return (
     <>

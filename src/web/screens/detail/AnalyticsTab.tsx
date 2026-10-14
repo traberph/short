@@ -10,26 +10,16 @@ import { Segmented } from "../../components/ui/form.js";
 import { Stat } from "../../components/ui/misc.js";
 import { Card, CardHeader, Skeleton } from "../../components/ui/surface.js";
 import { useAction } from "../../components/ui/toast.js";
+import { useResolvedTheme } from "../../lib/theme.js";
 
 type Range = 7 | 30 | 90;
 
 const cssVar = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-// Re-renders when the system switches between light and dark, so the chart picks up the new colors.
-function useColorScheme() {
-  const [dark, setDark] = useState(() => matchMedia("(prefers-color-scheme: dark)").matches);
-  useEffect(() => {
-    const mq = matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setDark(mq.matches);
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return dark;
-}
-
 function Chart({ series }: { series: StatsDay[] }) {
   const container = useRef<HTMLDivElement>(null);
-  const dark = useColorScheme();
+  // Redraw when light/dark mode changes so the chart picks up the new colors.
+  const mode = useResolvedTheme();
 
   useEffect(() => {
     const el = container.current;
@@ -70,7 +60,7 @@ function Chart({ series }: { series: StatsDay[] }) {
       resize.disconnect();
       plot.destroy();
     };
-  }, [series, dark]);
+  }, [series, mode]);
 
   return <div ref={container} className="w-full" />;
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { KeyRound, LayoutDashboard, Link2, LogOut, PanelsTopLeft, ShieldCheck } from "lucide-react";
 import type { Me } from "../../shared/api-types.js";
+import { ThemeCycleButton, ThemeSwitch } from "../components/ThemeToggle.js";
 import { Button } from "../components/ui/button.js";
 import { Link } from "../components/ui/misc.js";
 import { cx } from "../lib/cx.js";
@@ -74,6 +75,9 @@ export function Shell({ me, route, onLogout, children }: { me: Me; route: Route;
             </Link>
           ))}
         </nav>
+        <div className="px-4 pb-3">
+          <ThemeSwitch />
+        </div>
         <div className="flex items-center gap-3 border-t border-border p-4">
           <UserAvatar username={me.username} />
           <div className="min-w-0 flex-1">
@@ -90,6 +94,7 @@ export function Shell({ me, route, onLogout, children }: { me: Me; route: Route;
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-surface/85 px-4 backdrop-blur lg:hidden">
         <Logo />
         <div className="flex items-center gap-1">
+          <ThemeCycleButton />
           <UserAvatar username={me.username} />
           <Button variant="ghost" size="icon-sm" onClick={onLogout} aria-label="Sign out">
             <LogOut />
