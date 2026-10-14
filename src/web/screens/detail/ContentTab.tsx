@@ -2,16 +2,18 @@ import { useEffect, useState } from "react";
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, LayoutList, Link2, Pencil, Plus, Trash2, Type } from "lucide-react";
+import { ArrowUpRight, GripVertical, LayoutList, Link2, Pencil, Plus, Trash2, Type } from "lucide-react";
 import type { Block, Me, PageDetail, PageSummary } from "../../../shared/api-types.js";
 import { api, ApiRequestError, errorMessage, useApi } from "../../api.js";
-import { Button } from "../../components/ui/button.js";
+import { Button, buttonClass } from "../../components/ui/button.js";
 import { Dialog, useConfirm } from "../../components/ui/dialog.js";
 import { Field, Input, PrefixInput, Segmented, Select, Textarea } from "../../components/ui/form.js";
+import { Link } from "../../components/ui/misc.js";
 import { Card, CardHeader, EmptyState } from "../../components/ui/surface.js";
 import { useAction, useToast } from "../../components/ui/toast.js";
 import { cx } from "../../lib/cx.js";
 import { stripMarkdown } from "../../lib/markdown.js";
+import { detailPath } from "../../router.js";
 import { LivePreview } from "./PhonePreview.js";
 
 type Editing = { kind: "link"; block?: Block } | { kind: "text"; block?: Block } | null;
@@ -245,6 +247,9 @@ function BlockDialog({
   );
 }
 
+// The short link's own page in the dashboard (analytics, QR code, settings).
+const targetPath = (target: NonNullable<Block["target"]>) => detailPath({ id: target.id, kind: "redirect", namespace: target.namespace });
+
 function SortableBlock({ block, onEdit, onDelete }: { block: Block; onEdit: () => void; onDelete: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const isLink = block.kind === "link";
@@ -275,8 +280,24 @@ function SortableBlock({ block, onEdit, onDelete }: { block: Block; onEdit: () =
       </span>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{isLink ? block.label : stripMarkdown(block.markdown ?? "")}</div>
-        <div className="truncate font-mono text-xs text-muted">{isLink ? block.target?.path : "Text"}</div>
+        {isLink && block.target ? (
+          <Link to={targetPath(block.target)} className="block truncate font-mono text-xs text-muted hover:text-accent hover:underline">
+            {block.target.path}
+          </Link>
+        ) : (
+          <div className="truncate font-mono text-xs text-muted">Text</div>
+        )}
       </div>
+      {isLink && block.target && (
+        <Link
+          to={targetPath(block.target)}
+          className={buttonClass("ghost", "icon-sm")}
+          aria-label={`Open short link ${block.target.path}`}
+          title={`Open ${block.target.path}`}
+        >
+          <ArrowUpRight />
+        </Link>
+      )}
       <Button variant="ghost" size="icon-sm" onClick={onEdit} aria-label="Edit">
         <Pencil />
       </Button>

@@ -1,16 +1,13 @@
-import { useState, type ReactNode } from "react";
+import { useState, type AnchorHTMLAttributes, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { cx } from "../../lib/cx.js";
 import { linkHandler } from "../../router.js";
 import { Button } from "./button.js";
 import { useToast } from "./toast.js";
 
-export function Link({ to, className, children, ...rest }: { to: string; className?: string; children: ReactNode; "aria-current"?: "page" }) {
-  return (
-    <a href={to} onClick={linkHandler(to)} className={className} {...rest}>
-      {children}
-    </a>
-  );
+// In-app link: a normal <a> that navigates without a page reload.
+export function Link({ to, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }) {
+  return <a href={to} onClick={linkHandler(to)} {...rest} />;
 }
 
 export function publicUrl(path: string): string {

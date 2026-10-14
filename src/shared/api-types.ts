@@ -32,7 +32,7 @@ export interface Block {
   kind: "link" | "text";
   label: string | null;
   markdown: string | null;
-  target: { id: number; path: string; dest: string | null } | null;
+  target: { id: number; namespace: string; path: string; dest: string | null } | null;
 }
 
 export interface PageDetail extends PageSummary {

@@ -219,7 +219,7 @@ export function getBlocks(db: Db, pageId: number): Block[] {
       kind: b.kind,
       label: b.label,
       markdown: b.markdown,
-      target: target ? { id: target.id, path: pagePath(target), dest: target.dest } : null,
+      target: target ? { id: target.id, namespace: target.namespace, path: pagePath(target), dest: target.dest } : null,
     };
   });
 }
