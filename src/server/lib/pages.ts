@@ -147,7 +147,25 @@ function totalClicks(db: Db, pageIds: number[]): Map<number, number> {
   return new Map(rows.map((r) => [r.pageId, r.total]));
 }
 
-function toSummary(row: PageRow, clicks: number, pinned: boolean): PageSummary {
+// For each short link, the link pages whose buttons point at it.
+function linkPagesUsing(db: Db, targetIds: number[]): Map<number, { id: number; path: string }[]> {
+  const result = new Map<number, { id: number; path: string }[]>();
+  if (targetIds.length === 0) return result;
+  const rows = db
+    .selectDistinct({ targetId: blocks.targetId, id: pages.id, namespace: pages.namespace, code: pages.code })
+    .from(blocks)
+    .innerJoin(pages, eq(pages.id, blocks.pageId))
+    .where(inArray(blocks.targetId, targetIds))
+    .orderBy(asc(pages.namespace), asc(pages.code))
+    .all();
+  for (const r of rows) {
+    if (r.targetId === null) continue;
+    result.set(r.targetId, [...(result.get(r.targetId) ?? []), { id: r.id, path: pagePath(r) }]);
+  }
+  return result;
+}
+
+function toSummary(row: PageRow, clicks: number, pinned: boolean, usedOn: { id: number; path: string }[] = []): PageSummary {
   return {
     id: row.id,
     namespace: row.namespace,
@@ -158,6 +176,7 @@ function toSummary(row: PageRow, clicks: number, pinned: boolean): PageSummary {
     title: row.title,
     totalClicks: clicks,
     pinned,
+    usedOn,
   };
 }
 
@@ -171,7 +190,11 @@ export function listPages(db: Db, actor: Actor): PageSummary[] {
     rows.map((r) => r.id),
   );
   const pinned = getPinnedPageId(db);
-  return rows.map((r) => toSummary(r, counts.get(r.id) ?? 0, r.id === pinned));
+  const used = linkPagesUsing(
+    db,
+    rows.filter((r) => r.kind === "redirect").map((r) => r.id),
+  );
+  return rows.map((r) => toSummary(r, counts.get(r.id) ?? 0, r.id === pinned, used.get(r.id)));
 }
 
 export function getBlocks(db: Db, pageId: number): Block[] {
@@ -205,7 +228,7 @@ export function getPageDetail(db: Db, actor: Actor, id: number): PageDetail {
   const page = loadManagedPage(db, actor, id);
   const clicks = totalClicks(db, [id]).get(id) ?? 0;
   return {
-    ...toSummary(page, clicks, getPinnedPageId(db) === id),
+    ...toSummary(page, clicks, getPinnedPageId(db) === id, page.kind === "redirect" ? linkPagesUsing(db, [id]).get(id) : []),
     theme: (page.theme as Theme | null) ?? DEFAULT_THEME,
     showLogos: page.showLogos,
     avatarUrl: avatarUrl(page.avatar),

@@ -24,6 +24,11 @@ function Row({ page, showNamespace }: { page: PageSummary; showNamespace: boolea
             {page.path}
           </Link>
           {showNamespace && page.namespace === "" && <Badge>Root</Badge>}
+          {page.usedOn.length > 0 && (
+            <span className="shrink-0" title={`Used on ${page.usedOn.map((u) => u.path).join(", ")}`}>
+              <Badge icon={<PanelsTopLeft />}>{page.usedOn.length === 1 ? `on ${page.usedOn[0]!.path}` : `on ${page.usedOn.length} pages`}</Badge>
+            </span>
+          )}
           {page.pinned && (
             <Badge tone="accent" icon={<Pin />}>
               Home

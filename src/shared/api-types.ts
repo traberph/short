@@ -22,6 +22,8 @@ export interface PageSummary {
   title: string | null;
   totalClicks: number;
   pinned: boolean;
+  /** Short links only: the link pages that have a button pointing to this link. */
+  usedOn: { id: number; path: string }[];
 }
 
 export interface Block {

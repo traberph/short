@@ -196,6 +196,24 @@ describe("link pages", () => {
     expect((await alice.api("PUT", `/pages/${page.id}/blocks/order`, { ids: [blocks[0].id] })).status).toBe(400);
   });
 
+  it("lists the link pages a short link is used on", async () => {
+    const { user } = setup();
+    const alice = user("alice");
+    const link = await (await alice.api("POST", "/pages", { kind: "redirect", code: "gh", dest: "https://github.com" })).json();
+    const unused = await (await alice.api("POST", "/pages", { kind: "redirect", code: "x", dest: "https://x.test" })).json();
+    for (const code of ["b", "a"]) {
+      const page = await (await alice.api("POST", "/pages", { kind: "linkpage", code, title: code })).json();
+      // Two buttons to the same link on one page still count as one page.
+      await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", targetId: link.id, label: "GitHub" });
+      await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", targetId: link.id, label: "GitHub again" });
+    }
+
+    const list: { id: number; usedOn: { path: string }[] }[] = await (await alice.api("GET", "/pages")).json();
+    expect(list.find((p) => p.id === link.id)!.usedOn.map((u) => u.path)).toEqual(["/alice/a", "/alice/b"]);
+    expect(list.find((p) => p.id === unused.id)!.usedOn).toEqual([]);
+    expect((await (await alice.api("GET", `/pages/${link.id}`)).json()).usedOn).toHaveLength(2);
+  });
+
   it("creates a new short link while adding a link button", async () => {
     const { app, user } = setup();
     const alice = user("alice");
