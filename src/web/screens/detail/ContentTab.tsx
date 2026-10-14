@@ -355,7 +355,7 @@ export function ContentTab({ page, me, onChange }: { page: PageDetail; me: Me; o
         )}
       </Card>
 
-      <div className="hidden lg:block">
+      <div className="hidden lg:block lg:self-stretch">
         <LivePreview path={page.path} version={version} />
       </div>
 

@@ -67,7 +67,7 @@ export function apiRoutes(deps: Deps) {
 
       .get("/me", (c) => {
         const { username, isAdmin } = c.var.actor;
-        return c.json({ username, isAdmin, logoDev: !!config.logoDevToken } satisfies Me);
+        return c.json({ username, isAdmin, logoDev: !!config.logoDevToken, logoDevToken: config.logoDevToken ?? null } satisfies Me);
       })
 
       // Pages (redirects and link pages)

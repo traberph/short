@@ -11,18 +11,62 @@ import { stripMarkdown } from "../../lib/markdown.js";
 import { PhoneFrame } from "./PhonePreview.js";
 import { sameTheme, ThemePicker } from "./ThemePicker.js";
 
+// Button icon like on the public page: the website's logo when logos are on, otherwise its first letter.
+function MockIcon({ dest, logoDevToken }: { dest: string | null; logoDevToken: string | null }) {
+  const [failed, setFailed] = useState(false);
+  let host = "";
+  try {
+    host = dest ? new URL(dest).hostname : "";
+  } catch {
+    // Keep the letter placeholder.
+  }
+  if (host && logoDevToken && !failed) {
+    return (
+      <img
+        src={`https://img.logo.dev/${encodeURIComponent(host)}?token=${encodeURIComponent(logoDevToken)}`}
+        alt=""
+        onError={() => setFailed(true)}
+        className="size-7 shrink-0 rounded-full bg-white/85 object-cover"
+      />
+    );
+  }
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/85 text-xs font-bold text-gray-700">
+      {host.replace(/^www\./, "").charAt(0).toUpperCase() || "•"}
+    </span>
+  );
+}
+
 // Renders the page with unsaved settings so changes are visible while editing.
-function MockPreview({ title, avatarUrl, theme, page }: { title: string; avatarUrl: string | null; theme: Theme; page: PageDetail }) {
+function MockPreview({
+  title,
+  avatarUrl,
+  theme,
+  page,
+  logoDevToken,
+}: {
+  title: string;
+  avatarUrl: string | null;
+  theme: Theme;
+  page: PageDetail;
+  /** Set when logos are enabled for this page. */
+  logoDevToken: string | null;
+}) {
   return (
     <PhoneFrame caption="Preview of unsaved changes">
-      <div className="absolute inset-0 overflow-y-auto px-5 py-10 text-center" style={{ background: theme.background, color: theme.text }}>
+      <div className="absolute inset-0 flex flex-col overflow-y-auto px-5 pt-10 pb-5 text-center" style={{ background: theme.background, color: theme.text }}>
         {avatarUrl && <img src={avatarUrl} alt="" className="mx-auto size-20 rounded-full object-cover" />}
         <div className="mt-4 mb-6 text-xl font-bold">{title || "Untitled"}</div>
         <div className="flex flex-col gap-2.5">
           {page.blocks.map((b) =>
             b.kind === "link" ? (
-              <div key={b.id} className="rounded-lg px-3 py-2.5 text-sm font-semibold" style={{ background: theme.button, color: theme.buttonText }}>
-                {b.label}
+              <div
+                key={b.id}
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold"
+                style={{ background: theme.button, color: theme.buttonText }}
+              >
+                <MockIcon dest={b.target?.dest ?? null} logoDevToken={logoDevToken} />
+                <span className="flex-1 truncate pr-7">{b.label}</span>
               </div>
             ) : (
               <p key={b.id} className="line-clamp-3 text-sm opacity-90">
@@ -33,6 +77,7 @@ function MockPreview({ title, avatarUrl, theme, page }: { title: string; avatarU
           {!page.blocks.length &&
             [0, 1, 2].map((i) => <div key={i} className="h-10 rounded-lg opacity-60" style={{ background: theme.button }} />)}
         </div>
+        {logoDevToken && <p className="mt-auto pt-8 text-[11px] opacity-50">Logos provided by Logo.dev</p>}
       </div>
     </PhoneFrame>
   );
@@ -153,8 +198,14 @@ export function AppearanceTab({ page, me, onChange }: { page: PageDetail; me: Me
         </Card>
       </div>
 
-      <div className="hidden lg:block">
-        <MockPreview title={title} avatarUrl={page.avatarUrl} theme={theme} page={page} />
+      <div className="hidden lg:block lg:self-stretch">
+        <MockPreview
+          title={title}
+          avatarUrl={page.avatarUrl}
+          theme={theme}
+          page={page}
+          logoDevToken={me.logoDev && showLogos ? me.logoDevToken : null}
+        />
       </div>
     </div>
   );

@@ -46,7 +46,7 @@ describe("authentication", () => {
     expect(callback.status).toBe(302);
     const session = callback.headers.getSetCookie().find((c) => c.startsWith("short_session="))!.split(";")[0]!;
     const me = await (await app.request("/~/api/me", { headers: { cookie: session } })).json();
-    expect(me).toEqual({ username: "alice", isAdmin: true, logoDev: false });
+    expect(me).toEqual({ username: "alice", isAdmin: true, logoDev: false, logoDevToken: null });
 
     // A renamed account keeps its original namespace; losing the group removes admin.
     const login2 = await app.request("/~/auth/login");
@@ -59,6 +59,7 @@ describe("authentication", () => {
       username: "alice",
       isAdmin: false,
       logoDev: false,
+      logoDevToken: null,
     });
   });
 

@@ -8,6 +8,8 @@ export interface Me {
   isAdmin: boolean;
   /** Whether the server has a logo.dev token, i.e. link pages can show website logos. */
   logoDev: boolean;
+  /** Publishable logo.dev key (it's part of every public logo URL), used for the editor preview. */
+  logoDevToken: string | null;
 }
 
 export interface PageSummary {
