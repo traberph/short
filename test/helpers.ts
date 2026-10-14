@@ -9,7 +9,7 @@ import { openDb } from "../src/server/db/index.js";
 
 export const BASE_URL = "https://short.test";
 
-export function setup() {
+export function setup(overrides: Partial<Config> = {}) {
   const config: Config = {
     baseUrl: BASE_URL,
     oidc: { issuer: "https://auth.test/", clientId: "id", clientSecret: "secret" },
@@ -22,6 +22,7 @@ export function setup() {
     disableAttribution: false,
     retentionDays: 90,
     port: 0,
+    ...overrides,
   };
   const db = openDb(":memory:");
 

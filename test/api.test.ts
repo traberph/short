@@ -46,7 +46,7 @@ describe("authentication", () => {
     expect(callback.status).toBe(302);
     const session = callback.headers.getSetCookie().find((c) => c.startsWith("short_session="))!.split(";")[0]!;
     const me = await (await app.request("/~/api/me", { headers: { cookie: session } })).json();
-    expect(me).toEqual({ username: "alice", isAdmin: true });
+    expect(me).toEqual({ username: "alice", isAdmin: true, logoDev: false });
 
     // A renamed account keeps its original namespace; losing the group removes admin.
     const login2 = await app.request("/~/auth/login");
@@ -58,6 +58,7 @@ describe("authentication", () => {
     expect(await (await app.request("/~/api/me", { headers: { cookie: session2 } })).json()).toEqual({
       username: "alice",
       isAdmin: false,
+      logoDev: false,
     });
   });
 
@@ -207,6 +208,29 @@ describe("link pages", () => {
     expect(html).toContain("<strong>bold</strong>");
     expect(html).not.toContain("<script>");
     expect(html).not.toContain('href="javascript:');
+  });
+
+  it("shows logo.dev logos and attribution only when enabled for the page", async () => {
+    const { app, user } = setup({ logoDevToken: "pk_test" });
+    const alice = user("alice");
+    expect((await (await alice.api("GET", "/me")).json()).logoDev).toBe(true);
+
+    const page = await (await alice.api("POST", "/pages", { kind: "linkpage", code: "me", title: "Alice" })).json();
+    const link = await (await alice.api("POST", "/pages", { kind: "redirect", code: "gh", dest: "https://github.com" })).json();
+    await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", targetId: link.id, label: "GitHub" });
+
+    const enabled = await (await app.request("/alice/me")).text();
+    expect(enabled).toContain("img.logo.dev/github.com");
+    expect(enabled).toContain("Logos provided by");
+
+    const updated = await (await alice.api("PATCH", `/pages/${page.id}`, { showLogos: false })).json();
+    expect(updated.showLogos).toBe(false);
+    const disabled = await (await app.request("/alice/me")).text();
+    expect(disabled).not.toContain("img.logo.dev");
+    expect(disabled).not.toContain("Logos provided by");
+
+    // Redirects have no logos setting.
+    expect((await alice.api("PATCH", `/pages/${link.id}`, { showLogos: false })).status).toBe(400);
   });
 
   it("removes blocks, stats and pin when a linked page is deleted", async () => {

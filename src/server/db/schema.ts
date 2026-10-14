@@ -27,6 +27,8 @@ export const pages = sqliteTable(
     title: text("title"),
     avatar: text("avatar"),
     theme: text("theme", { mode: "json" }),
+    // Link pages only: show website logos from logo.dev (needs LOGO_DEV_TOKEN).
+    showLogos: integer("show_logos", { mode: "boolean" }).notNull().default(true),
     createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
     createdAt: createdAt(),
     updatedAt: integer("updated_at", { mode: "timestamp" })

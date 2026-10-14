@@ -103,8 +103,8 @@ export function createPage(db: Db, actor: Actor, input: CreatePageInput): PageSu
 export function updatePage(db: Db, actor: Actor, id: number, input: UpdatePageInput): PageDetail {
   const page = loadManagedPage(db, actor, id);
   if (input.dest !== undefined && page.kind !== "redirect") throw new HttpError(400, "Only redirects have a destination");
-  if ((input.title !== undefined || input.theme !== undefined) && page.kind !== "linkpage") {
-    throw new HttpError(400, "Only link pages have a title and theme");
+  if ((input.title !== undefined || input.theme !== undefined || input.showLogos !== undefined) && page.kind !== "linkpage") {
+    throw new HttpError(400, "Only link pages have a title, theme and logos");
   }
   if (input.code !== undefined && input.code !== page.code && codeTaken(db, page.namespace, input.code)) {
     throw new HttpError(409, "Shortcode is not available", { code: ["Already in use or reserved"] });
@@ -207,6 +207,7 @@ export function getPageDetail(db: Db, actor: Actor, id: number): PageDetail {
   return {
     ...toSummary(page, clicks, getPinnedPageId(db) === id),
     theme: (page.theme as Theme | null) ?? DEFAULT_THEME,
+    showLogos: page.showLogos,
     avatarUrl: avatarUrl(page.avatar),
     blocks: page.kind === "linkpage" ? getBlocks(db, id) : [],
   };

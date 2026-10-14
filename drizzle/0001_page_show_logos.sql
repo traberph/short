@@ -1,0 +1,1 @@
+ALTER TABLE `pages` ADD `show_logos` integer DEFAULT true NOT NULL;

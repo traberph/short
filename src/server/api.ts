@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { desc, eq, and } from "drizzle-orm";
 import type { z } from "zod";
-import type { ApiToken, CreatedToken } from "../shared/api-types.js";
+import type { ApiToken, CreatedToken, Me } from "../shared/api-types.js";
 import {
   createBlockSchema,
   createPageSchema,
@@ -65,7 +65,7 @@ export function apiRoutes(deps: Deps) {
 
       .get("/me", (c) => {
         const { username, isAdmin } = c.var.actor;
-        return c.json({ username, isAdmin });
+        return c.json({ username, isAdmin, logoDev: !!config.logoDevToken } satisfies Me);
       })
 
       // Pages (redirects and link pages)

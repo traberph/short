@@ -67,6 +67,7 @@ export const updatePageSchema = z.object({
   dest: destSchema.optional(),
   title: titleSchema.optional(),
   theme: themeSchema.optional(),
+  showLogos: z.boolean().optional(),
 });
 export type UpdatePageInput = z.infer<typeof updatePageSchema>;
 

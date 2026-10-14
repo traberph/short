@@ -109,7 +109,7 @@ export function DetailScreen({ id, kind, tab, me }: { id: number; kind: PageKind
 
       <div className="animate-fade-in" key={active}>
         {active === "content" && <ContentTab page={p} me={me} onChange={page.set} />}
-        {active === "appearance" && <AppearanceTab page={p} onChange={page.set} />}
+        {active === "appearance" && <AppearanceTab page={p} me={me} onChange={page.set} />}
         {active === "analytics" && <AnalyticsTab pageId={p.id} />}
         {active === "qr" && <QrTab url={url} name={p.code} />}
         {active === "settings" && <SettingsTab page={p} me={me} onChange={page.set} reload={page.reload} />}

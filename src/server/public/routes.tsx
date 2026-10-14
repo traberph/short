@@ -52,7 +52,8 @@ export function publicRoutes({ db, config }: Deps) {
         avatarUrl={avatarUrl(page.avatar)}
         theme={(page.theme as Theme | null) ?? DEFAULT_THEME}
         blocks={getBlocks(db, page.id)}
-        logoDevToken={config.logoDevToken}
+        // Logos and their attribution only appear when the page owner enabled them.
+        logoDevToken={page.showLogos ? config.logoDevToken : undefined}
         showAttribution={!config.disableAttribution}
       />,
     );

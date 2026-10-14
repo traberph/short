@@ -6,6 +6,8 @@ export type PageKind = "redirect" | "linkpage";
 export interface Me {
   username: string;
   isAdmin: boolean;
+  /** Whether the server has a logo.dev token, i.e. link pages can show website logos. */
+  logoDev: boolean;
 }
 
 export interface PageSummary {
@@ -31,6 +33,7 @@ export interface Block {
 
 export interface PageDetail extends PageSummary {
   theme: Theme;
+  showLogos: boolean;
   avatarUrl: string | null;
   blocks: Block[];
 }

@@ -102,3 +102,45 @@ export function ColorInput({ value, onChange, label }: { value: string; onChange
     </div>
   );
 }
+
+// On/off switch with a label and optional description, e.g. for settings.
+export function Switch({
+  checked,
+  onChange,
+  label,
+  description,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  description?: ReactNode;
+  disabled?: boolean;
+}) {
+  const id = useId();
+  return (
+    <div className={cx("flex items-start justify-between gap-4", disabled && "opacity-60")}>
+      <div className="min-w-0">
+        <label htmlFor={id} className="text-sm font-medium text-fg">
+          {label}
+        </label>
+        {description && <div className="mt-0.5 text-xs text-muted">{description}</div>}
+      </div>
+      <button
+        id={id}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={cx(
+          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed",
+          checked ? "bg-accent" : "bg-border-strong",
+        )}
+      >
+        <span className={cx("inline-block size-5 rounded-full bg-white shadow transition-transform", checked ? "translate-x-5.5" : "translate-x-0.5")} />
+      </button>
+    </div>
+  );
+}

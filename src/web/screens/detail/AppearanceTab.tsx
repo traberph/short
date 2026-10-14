@@ -1,10 +1,10 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Check, ExternalLink, ImageUp, Trash2 } from "lucide-react";
-import type { PageDetail } from "../../../shared/api-types.js";
+import type { Me, PageDetail } from "../../../shared/api-types.js";
 import type { Theme } from "../../../shared/validation.js";
 import { api } from "../../api.js";
 import { Button } from "../../components/ui/button.js";
-import { ColorInput, Field, Input, Segmented } from "../../components/ui/form.js";
+import { ColorInput, Field, Input, Segmented, Switch } from "../../components/ui/form.js";
 import { Card, CardBody, CardFooter, CardHeader } from "../../components/ui/surface.js";
 import { useAction } from "../../components/ui/toast.js";
 import { cx } from "../../lib/cx.js";
@@ -241,16 +241,17 @@ function MockPreview({ title, avatarUrl, theme, page }: { title: string; avatarU
   );
 }
 
-export function AppearanceTab({ page, onChange }: { page: PageDetail; onChange: (page: PageDetail) => void }) {
+export function AppearanceTab({ page, me, onChange }: { page: PageDetail; me: Me; onChange: (page: PageDetail) => void }) {
   const [title, setTitle] = useState(page.title ?? "");
   const [theme, setTheme] = useState(page.theme);
+  const [showLogos, setShowLogos] = useState(page.showLogos);
   const { busy, run } = useAction();
   const upload = useAction();
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const dirty = title !== (page.title ?? "") || !sameTheme(theme, page.theme);
+  const dirty = title !== (page.title ?? "") || !sameTheme(theme, page.theme) || showLogos !== page.showLogos;
 
-  const save = () => run(async () => onChange(await api<PageDetail>("PATCH", `/pages/${page.id}`, { title, theme })), "Appearance saved");
+  const save = () => run(async () => onChange(await api<PageDetail>("PATCH", `/pages/${page.id}`, { title, theme, showLogos })), "Appearance saved");
 
   const uploadAvatar = (file: File | undefined) => {
     if (!file) return;
@@ -311,8 +312,29 @@ export function AppearanceTab({ page, onChange }: { page: PageDetail; onChange: 
 
         <Card>
           <CardHeader title="Theme" description="Pick a preset, use a palette from coolors.co or set your own colors." />
-          <CardBody>
+          <CardBody className="flex flex-col gap-7">
             <ThemePicker theme={theme} onChange={setTheme} />
+            <div className="border-t border-border pt-6">
+              <Switch
+                label="Website logos"
+                checked={me.logoDev && showLogos}
+                onChange={setShowLogos}
+                disabled={!me.logoDev}
+                description={
+                  me.logoDev ? (
+                    <>
+                      Show the logo of each link's website on its button, provided by{" "}
+                      <a href="https://logo.dev" target="_blank" rel="noreferrer" className="underline">
+                        logo.dev
+                      </a>
+                      . When off, buttons show the first letter instead and the logo.dev credit is hidden.
+                    </>
+                  ) : (
+                    "Not available on this server. An admin can enable it by setting LOGO_DEV_TOKEN."
+                  )
+                }
+              />
+            </div>
           </CardBody>
           <CardFooter>
             {dirty && <span className="mr-auto text-sm text-muted">Unsaved changes</span>}
@@ -322,6 +344,7 @@ export function AppearanceTab({ page, onChange }: { page: PageDetail; onChange: 
               onClick={() => {
                 setTitle(page.title ?? "");
                 setTheme(page.theme);
+                setShowLogos(page.showLogos);
               }}
             >
               Discard

@@ -55,7 +55,7 @@ Copy `.env.template` to `.env` and fill it in:
 | `TIMEZONE` | | Timezone for "today" and the daily stats, default `UTC` |
 | `TRUST_PROXY` | | `true` behind a reverse proxy, so `X-Forwarded-For` is used for the visitor IP |
 | `DATA_DIR` | | Database and uploads, default `./data` (`/data` in Docker) |
-| `LOGO_DEV_TOKEN` | | Shows website logos on link page buttons via [logo.dev](https://logo.dev) (adds an attribution) |
+| `LOGO_DEV_TOKEN` | | Enables website logos on link page buttons via [logo.dev](https://logo.dev). Page owners can turn them off per page; the logo.dev credit only shows where logos are on |
 | `DISABLE_ATTRIBUTION` | | `true` hides the "powered by" footer |
 
 ### 3. Run
