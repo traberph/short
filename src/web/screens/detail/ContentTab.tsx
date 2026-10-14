@@ -4,18 +4,27 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, LayoutList, Link2, Pencil, Plus, Trash2, Type } from "lucide-react";
 import type { Block, Me, PageDetail, PageSummary } from "../../../shared/api-types.js";
-import { api, useApi } from "../../api.js";
+import { api, ApiRequestError, errorMessage, useApi } from "../../api.js";
 import { Button } from "../../components/ui/button.js";
 import { Dialog, useConfirm } from "../../components/ui/dialog.js";
-import { Field, Input, Select, Textarea } from "../../components/ui/form.js";
-import { Link } from "../../components/ui/misc.js";
+import { Field, Input, PrefixInput, Segmented, Select, Textarea } from "../../components/ui/form.js";
 import { Card, CardHeader, EmptyState } from "../../components/ui/surface.js";
-import { useAction } from "../../components/ui/toast.js";
+import { useAction, useToast } from "../../components/ui/toast.js";
 import { cx } from "../../lib/cx.js";
 import { stripMarkdown } from "../../lib/markdown.js";
 import { LivePreview } from "./PhonePreview.js";
 
 type Editing = { kind: "link"; block?: Block } | { kind: "text"; block?: Block } | null;
+type LinkSource = "existing" | "new";
+
+// Suggests a button label from a URL, e.g. "https://www.github.com/x" → "github.com".
+function hostnameOf(url: string | null | undefined): string {
+  try {
+    return url ? new URL(url).hostname.replace(/^www\./, "") : "";
+  } catch {
+    return "";
+  }
+}
 
 function BlockDialog({
   editing,
@@ -30,52 +39,98 @@ function BlockDialog({
   onClose: () => void;
   onSaved: (blocks: Block[]) => void;
 }) {
-  const pages = useApi<PageSummary[]>(editing?.kind === "link" && !editing.block ? "/pages" : null);
-  const { busy, run } = useAction();
+  const isNewLink = editing?.kind === "link" && !editing.block;
+  const pages = useApi<PageSummary[]>(isNewLink ? "/pages" : null);
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [source, setSource] = useState<LinkSource>("existing");
   const [targetId, setTargetId] = useState("");
+  const [dest, setDest] = useState("");
+  const [code, setCode] = useState("");
   const [label, setLabel] = useState("");
+  const [labelTouched, setLabelTouched] = useState(false);
   const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
+    setErrors({});
+    setSource("existing");
     setTargetId("");
+    setDest("");
+    setCode("");
     setLabel(editing?.block?.label ?? "");
+    setLabelTouched(!!editing?.block);
     setMarkdown(editing?.block?.markdown ?? "");
   }, [editing]);
 
-  if (!editing) return <Dialog open={false} onClose={onClose} title="" />;
-
   // Same rule as the server: own namespace only, unless admin.
   const targets = (pages.data ?? []).filter((p) => p.kind === "redirect" && (me.isAdmin || p.namespace === page.namespace));
-  const isNew = !editing.block;
+  const noTargets = !!pages.data && targets.length === 0;
 
-  const submit = () =>
-    run(async () => {
-      let blocks: Block[];
-      if (editing.block) {
-        blocks = await api<Block[]>("PATCH", `/blocks/${editing.block.id}`, editing.kind === "text" ? { markdown } : { label });
-      } else if (editing.kind === "link") {
-        blocks = await api<Block[]>("POST", `/pages/${page.id}/blocks`, { kind: "link", targetId: Number(targetId), label });
-      } else {
-        blocks = await api<Block[]>("POST", `/pages/${page.id}/blocks`, { kind: "text", markdown });
-      }
+  // Without existing links, creating one is the only option.
+  useEffect(() => {
+    if (noTargets) setSource("new");
+  }, [noTargets]);
+
+  if (!editing) return <Dialog open={false} onClose={onClose} title="" />;
+
+  const isNew = !editing.block;
+  const suggestLabel = (url: string | null | undefined) => {
+    if (!labelTouched) setLabel(hostnameOf(url));
+  };
+
+  const body = (): unknown => {
+    if (editing.kind === "text") return { kind: "text", markdown };
+    if (source === "new") return { kind: "link", label, newLink: { dest: dest.trim(), ...(code.trim() && { code: code.trim() }) } };
+    return { kind: "link", label, targetId: Number(targetId) };
+  };
+
+  const submit = async () => {
+    setBusy(true);
+    setErrors({});
+    try {
+      const blocks = editing.block
+        ? await api<Block[]>("PATCH", `/blocks/${editing.block.id}`, editing.kind === "text" ? { markdown } : { label })
+        : await api<Block[]>("POST", `/pages/${page.id}/blocks`, body());
       onSaved(blocks);
       onClose();
-    }, isNew ? "Block added" : "Block updated");
+      const created = isNewLink && source === "new" ? blocks[blocks.length - 1]?.target?.path : undefined;
+      toast(created ? `Created ${created} and added it` : isNew ? "Block added" : "Block updated");
+    } catch (err) {
+      // Show validation problems next to the field they belong to.
+      const issues = err instanceof ApiRequestError ? err.issues : undefined;
+      if (!issues) {
+        toast(errorMessage(err), true);
+        return;
+      }
+      const field = (key: string) => (key.startsWith("newLink.") ? key.slice(8) : key);
+      setErrors(Object.fromEntries(Object.entries(issues).map(([k, v]) => [field(k), v.join(", ")])));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const canSubmit =
+    editing.kind === "text"
+      ? !!markdown.trim()
+      : !!label.trim() && (!isNew || (source === "existing" ? !!targetId : !!dest.trim()));
+
+  const prefix = page.namespace ? `/${page.namespace}/` : "/";
 
   return (
     <Dialog
       open
       onClose={onClose}
-      onSubmit={submit}
+      onSubmit={() => void submit()}
       title={editing.kind === "link" ? (isNew ? "Add link button" : "Edit link button") : isNew ? "Add text" : "Edit text"}
-      description={editing.kind === "link" ? "Buttons point at one of your short links, so every click is counted." : undefined}
+      description={editing.kind === "link" && isNew ? "Buttons point at a short link, so every click is counted." : undefined}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={busy} disabled={editing.kind === "link" ? !label.trim() || (isNew && !targetId) : !markdown.trim()}>
-            {isNew ? "Add" : "Save"}
+          <Button type="submit" loading={busy} disabled={!canSubmit}>
+            {isNew ? (source === "new" && editing.kind === "link" ? "Create and add" : "Add") : "Save"}
           </Button>
         </>
       }
@@ -83,22 +138,33 @@ function BlockDialog({
       {editing.kind === "link" ? (
         <>
           {isNew && (
-            <Field
-              label="Short link"
-              hint={
-                pages.data && !targets.length ? (
-                  <>
-                    You don't have any short links yet.{" "}
-                    <Link to="/~/links" className="underline">
-                      Create one first
-                    </Link>
-                    .
-                  </>
-                ) : undefined
-              }
-            >
+            <Segmented
+              ariaLabel="Link"
+              value={source}
+              onChange={(v) => {
+                setSource(v);
+                setErrors({});
+              }}
+              options={[
+                { value: "existing", label: "Existing link" },
+                { value: "new", label: "New link" },
+              ]}
+            />
+          )}
+
+          {isNew && source === "existing" && (
+            <Field label="Short link" error={errors.targetId} hint={noTargets ? "You don't have any short links yet. Create a new one instead." : undefined}>
               {(id) => (
-                <Select id={id} required value={targetId} onChange={(e) => setTargetId(e.target.value)}>
+                <Select
+                  id={id}
+                  required
+                  value={targetId}
+                  disabled={noTargets}
+                  onChange={(e) => {
+                    setTargetId(e.target.value);
+                    suggestLabel(targets.find((t) => String(t.id) === e.target.value)?.dest);
+                  }}
+                >
                   <option value="">Choose a short link…</option>
                   {targets.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -109,8 +175,54 @@ function BlockDialog({
               )}
             </Field>
           )}
-          <Field label="Button label">
-            {(id) => <Input id={id} required autoFocus={!isNew} placeholder="My GitHub" value={label} onChange={(e) => setLabel(e.target.value)} />}
+
+          {isNew && source === "new" && (
+            <>
+              <Field label="Destination URL" error={errors.dest}>
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="url"
+                    required
+                    autoFocus
+                    placeholder="https://example.com"
+                    value={dest}
+                    onChange={(e) => {
+                      setDest(e.target.value);
+                      suggestLabel(e.target.value);
+                    }}
+                  />
+                )}
+              </Field>
+              <Field label="Shortcode" hint="Optional. Leave empty for a random 5-character code." error={errors.code}>
+                {(id) => (
+                  <PrefixInput
+                    id={id}
+                    prefix={prefix}
+                    placeholder="random"
+                    pattern="[A-Za-z0-9][A-Za-z0-9_\-]{0,63}"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                  />
+                )}
+              </Field>
+            </>
+          )}
+
+          <Field label="Button label" error={errors.label}>
+            {(id) => (
+              <Input
+                id={id}
+                required
+                autoFocus={!isNew}
+                placeholder="My GitHub"
+                value={label}
+                onChange={(e) => {
+                  setLabel(e.target.value);
+                  setLabelTouched(true);
+                }}
+              />
+            )}
           </Field>
         </>
       ) : (

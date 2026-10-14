@@ -195,6 +195,36 @@ describe("link pages", () => {
     expect((await alice.api("PUT", `/pages/${page.id}/blocks/order`, { ids: [blocks[0].id] })).status).toBe(400);
   });
 
+  it("creates a new short link while adding a link button", async () => {
+    const { app, user } = setup();
+    const alice = user("alice");
+    const admin = user("root", true);
+    const page = await (await alice.api("POST", "/pages", { kind: "linkpage", code: "me", title: "Alice" })).json();
+    await alice.api("POST", "/pages", { kind: "redirect", code: "taken", dest: "https://t.test" });
+
+    const blocks = await (
+      await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", label: "Blog", newLink: { dest: "https://blog.test", code: "blog" } })
+    ).json();
+    expect(blocks[0].target.path).toBe("/alice/blog");
+    expect((await app.request("/alice/blog")).headers.get("location")).toBe("https://blog.test");
+
+    // A taken code fails without leaving a button behind.
+    const clash = await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", label: "x", newLink: { dest: "https://x.test", code: "taken" } });
+    expect(clash.status).toBe(409);
+    expect((await (await alice.api("GET", `/pages/${page.id}`)).json()).blocks).toHaveLength(1);
+
+    // Exactly one of targetId and newLink.
+    expect((await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", label: "x" })).status).toBe(400);
+    expect(
+      (await alice.api("POST", `/pages/${page.id}/blocks`, { kind: "link", label: "x", targetId: blocks[0].target.id, newLink: { dest: "https://x.test" } }))
+        .status,
+    ).toBe(400);
+
+    // An admin editing Alice's page creates the link in Alice's namespace, with a random code.
+    const byAdmin = await (await admin.api("POST", `/pages/${page.id}/blocks`, { kind: "link", label: "Shop", newLink: { dest: "https://shop.test" } })).json();
+    expect(byAdmin[1].target.path).toMatch(/^\/alice\/[A-Za-z0-9]{5}$/);
+  });
+
   it("renders markdown without raw HTML or script links", async () => {
     const { app, user } = setup();
     const alice = user("alice");

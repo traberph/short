@@ -71,10 +71,21 @@ export const updatePageSchema = z.object({
 });
 export type UpdatePageInput = z.infer<typeof updatePageSchema>;
 
-export const createBlockSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("link"), targetId: z.number().int().positive(), label: titleSchema }),
-  z.object({ kind: z.literal("text"), markdown: z.string().max(5000) }),
-]);
+// A link button points at an existing short link (targetId) or creates a new one in the page's namespace (newLink).
+export const createBlockSchema = z
+  .discriminatedUnion("kind", [
+    z.object({
+      kind: z.literal("link"),
+      label: titleSchema,
+      targetId: z.number().int().positive().optional(),
+      newLink: z.object({ dest: destSchema, code: codeSchema.optional() }).optional(),
+    }),
+    z.object({ kind: z.literal("text"), markdown: z.string().max(5000) }),
+  ])
+  .refine((b) => b.kind !== "link" || (b.targetId === undefined) !== (b.newLink === undefined), {
+    message: "Pick an existing link or create a new one",
+    path: ["targetId"],
+  });
 export type CreateBlockInput = z.infer<typeof createBlockSchema>;
 
 export const updateBlockSchema = z.object({

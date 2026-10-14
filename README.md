@@ -81,6 +81,8 @@ curl -X POST https://short.example.com/~/api/pages \
 Main endpoints: `GET/POST /pages`, `GET/PATCH/DELETE /pages/:id`, `GET/DELETE /pages/:id/stats?days=7|30|90`, `POST /pages/:id/blocks`, `PUT /pages/:id/blocks/order`, `PATCH/DELETE /blocks/:id`, `PUT /pages/:id/avatar`, `GET/POST/DELETE /tokens`.
 Admin only: `PUT/DELETE /pin`, `GET /users`, `GET /conflicts`.
 
+Link buttons can reference an existing short link (`{"kind":"link","label":"…","targetId":12}`) or create one in the page's namespace in the same request (`{"kind":"link","label":"…","newLink":{"dest":"https://…","code":"optional"}}`).
+
 ## Development
 
 ```sh

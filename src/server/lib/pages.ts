@@ -225,14 +225,27 @@ function loadLinkPage(db: Db, actor: Actor, id: number): PageRow {
 
 export function addBlock(db: Db, actor: Actor, pageId: number, input: CreateBlockInput): Block[] {
   const page = loadLinkPage(db, actor, pageId);
-  let targetId: number | null = null;
-  if (input.kind === "link") {
-    const target = db.select().from(pages).where(eq(pages.id, input.targetId)).get();
-    if (!target || !canLinkTo(actor, page, target)) {
-      throw new HttpError(400, "Invalid link target", { targetId: ["Pick one of your redirect links"] });
+  // better-sqlite3 uses a single connection, so the calls on `db` below all run inside this transaction:
+  // a new short link is only kept if the button is added too.
+  db.transaction(() => {
+    let targetId: number | null = null;
+    if (input.kind === "link" && input.newLink) {
+      const { code, dest } = input.newLink;
+      // The new link lives next to the page, e.g. /alice/<code> for a page under /alice/.
+      targetId = createPage(db, actor, { kind: "redirect", namespace: page.namespace, code, dest }).id;
+    } else if (input.kind === "link") {
+      const target = input.targetId ? db.select().from(pages).where(eq(pages.id, input.targetId)).get() : undefined;
+      if (!target || !canLinkTo(actor, page, target)) {
+        throw new HttpError(400, "Invalid link target", { targetId: ["Pick one of your redirect links"] });
+      }
+      targetId = target.id;
     }
-    targetId = target.id;
-  }
+    insertBlock(db, page.id, input, targetId);
+  });
+  return getBlocks(db, pageId);
+}
+
+function insertBlock(db: Db, pageId: number, input: CreateBlockInput, targetId: number | null): void {
   const max = db
     .select({ max: sql<number | null>`max(${blocks.position})` })
     .from(blocks)
@@ -248,7 +261,6 @@ export function addBlock(db: Db, actor: Actor, pageId: number, input: CreateBloc
       targetId,
     })
     .run();
-  return getBlocks(db, pageId);
 }
 
 function loadManagedBlock(db: Db, actor: Actor, blockId: number) {
