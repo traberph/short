@@ -370,8 +370,8 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
           <p className="mt-1.5 text-xs text-danger">{linkError}</p>
         ) : (
           <p className="mt-1.5 text-xs text-muted">
-            Create or pick a palette on{" "}
-            <a href="https://coolors.co/generate" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 underline">
+            Find a palette on{" "}
+            <a href="https://coolors.co/palettes" target="_blank" rel="noreferrer" className="inline-flex items-center gap-0.5 underline">
               coolors.co <ExternalLink className="size-3" />
             </a>{" "}
             and paste its URL here.
