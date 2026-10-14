@@ -1,24 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { errorMessage } from "../api.js";
-import { linkHandler } from "../router.js";
-
-export function Link({ to, className, children }: { to: string; className?: string; children: ReactNode }) {
-  return (
-    <a href={to} onClick={linkHandler(to)} className={className}>
-      {children}
-    </a>
-  );
-}
-
-export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
-  return (
-    <div className="mb-3">
-      <label>{label}</label>
-      {children}
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
-    </div>
-  );
-}
+import { CircleAlert, CircleCheck } from "lucide-react";
+import { errorMessage } from "../../api.js";
 
 type Toast = { id: number; message: string; error: boolean };
 const ToastContext = createContext<(message: string, error?: boolean) => void>(() => {});
@@ -28,14 +10,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((message: string, error = false) => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, message, error }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), error ? 5000 : 3000);
   }, []);
+
   return (
     <ToastContext.Provider value={show}>
       {children}
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+      <div
+        aria-live="polite"
+        className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex flex-col items-center gap-2 px-4 lg:right-6 lg:bottom-6 lg:left-auto lg:items-end"
+      >
         {toasts.map((t) => (
-          <div key={t.id} className={`rounded px-4 py-2 text-white shadow-lg ${t.error ? "bg-red-800" : "bg-green-700"}`}>
+          <div
+            key={t.id}
+            className="pointer-events-auto flex max-w-sm animate-pop-in items-center gap-2.5 rounded-xl border border-border bg-surface px-4 py-3 text-sm shadow-lg"
+          >
+            {t.error ? <CircleAlert className="size-4 shrink-0 text-danger" /> : <CircleCheck className="size-4 shrink-0 text-success" />}
             {t.message}
           </div>
         ))}
@@ -46,7 +36,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export const useToast = () => useContext(ToastContext);
 
-// Runs an async action with a busy flag and reports failures as a toast.
+// Runs an async action with a busy flag and reports the outcome as a toast.
 export function useAction() {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
@@ -67,8 +57,4 @@ export function useAction() {
     [toast],
   );
   return { busy, run };
-}
-
-export function publicUrl(path: string): string {
-  return `${location.origin}${path}`;
 }

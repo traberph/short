@@ -11,12 +11,6 @@ A small self-hosted URL shortener and link-page tool for a handful of people, wi
 
 See [REQUIREMENTS.md](REQUIREMENTS.md) for the full feature list.
 
-![Link page](.assets/linkpage.png)
-
-![Dashboard](.assets/dashboard.png)
-
-![Link page editor](.assets/linkpage-editor.png)
-
 ## URLs
 
 | Path | What |
