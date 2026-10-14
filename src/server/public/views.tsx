@@ -7,7 +7,7 @@ import { renderMarkdown } from "./markdown.js";
 const STYLES = `
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--fg)}
-main{display:flex;flex-direction:column;align-items:center;padding:3rem 1rem;max-width:28rem;margin:0 auto}
+main{display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh;padding:3rem 1rem 1.5rem;max-width:28rem;margin:0 auto}
 .avatar{width:96px;height:96px;border-radius:9999px;object-fit:cover;animation:zoom .6s ease both}
 h1{font-size:2rem;margin:1.5rem 0 2rem;text-align:center;animation:zoom .6s ease both}
 .blocks{width:100%;display:flex;flex-direction:column;gap:.75rem}
@@ -18,7 +18,7 @@ h1{font-size:2rem;margin:1.5rem 0 2rem;text-align:center;animation:zoom .6s ease
 .icon{width:2rem;height:2rem;border-radius:9999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.85);color:#374151;font-weight:700}
 .text{line-height:1.5;text-align:center}
 .text a{color:inherit}
-footer{margin-top:3rem;font-size:.85rem;opacity:.5;text-align:center}
+footer{margin-top:auto;padding-top:3rem;font-size:.85rem;opacity:.5;text-align:center}
 footer a{color:inherit}
 .center{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:1rem}
 @keyframes zoom{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
