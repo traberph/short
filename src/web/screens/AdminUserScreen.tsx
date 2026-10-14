@@ -57,11 +57,11 @@ export function AdminUserScreen({ username, me }: { username: string; me: Me }) 
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" icon={<PanelsTopLeft />} onClick={() => setCreating("linkpage")}>
-            New link page
-          </Button>
           <Button icon={<Plus />} onClick={() => setCreating("redirect")}>
             New short link
+          </Button>
+          <Button variant="secondary" icon={<PanelsTopLeft />} onClick={() => setCreating("linkpage")}>
+            New link page
           </Button>
         </div>
       </header>
@@ -80,13 +80,13 @@ export function AdminUserScreen({ username, me }: { username: string; me: Me }) 
         </div>
 
         <section>
-          <h2 className="mb-3 text-base font-semibold">Link pages</h2>
-          <PageTable kind="linkpage" pages={theirs} empty={{ title: "No link pages", description: `${username} hasn't created any link pages.` }} />
+          <h2 className="mb-3 text-base font-semibold">Short links</h2>
+          <PageTable kind="redirect" pages={theirs} empty={{ title: "No short links", description: `${username} hasn't created any short links.` }} />
         </section>
 
         <section>
-          <h2 className="mb-3 text-base font-semibold">Short links</h2>
-          <PageTable kind="redirect" pages={theirs} empty={{ title: "No short links", description: `${username} hasn't created any short links.` }} />
+          <h2 className="mb-3 text-base font-semibold">Link pages</h2>
+          <PageTable kind="linkpage" pages={theirs} empty={{ title: "No link pages", description: `${username} hasn't created any link pages.` }} />
         </section>
       </div>
 

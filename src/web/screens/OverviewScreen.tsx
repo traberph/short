@@ -62,11 +62,11 @@ export function OverviewScreen({ me }: { me: Me }) {
         description="Here's how your links are doing."
         actions={
           <>
-            <Button variant="secondary" icon={<PanelsTopLeft />} onClick={() => setCreating("linkpage")}>
-              New link page
-            </Button>
             <Button icon={<Plus />} onClick={() => setCreating("redirect")}>
               New short link
+            </Button>
+            <Button variant="secondary" icon={<PanelsTopLeft />} onClick={() => setCreating("linkpage")}>
+              New link page
             </Button>
           </>
         }
