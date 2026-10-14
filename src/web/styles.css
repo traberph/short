@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* Semantic color tokens. Components only use these, so light and dark mode stay in sync. */
+@theme {
+  --color-canvas: #f6f6f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f1f4;
+  --color-border: #e4e4e9;
+  --color-border-strong: #d1d1d8;
+  --color-fg: #18181b;
+  --color-muted: #6b6b76;
+  --color-accent: #7c3aed;
+  --color-accent-hover: #6d28d9;
+  --color-accent-fg: #ffffff;
+  --color-accent-soft: #f1ebff;
+  --color-accent-soft-fg: #6d28d9;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fdecec;
+  --color-danger-soft-fg: #b91c1c;
+  --color-success: #16a34a;
+  --color-warning-soft: #fdf4e3;
+  --color-warning-soft-fg: #92400e;
+  --color-chart-1: #7c3aed;
+  --color-chart-2: #0ea5e9;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-pop-in: pop-in 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: #0c0c10;
+    --color-surface: #141419;
+    --color-surface-2: #1d1d24;
+    --color-border: #26262e;
+    --color-border-strong: #34343e;
+    --color-fg: #ececf1;
+    --color-muted: #9898a6;
+    --color-accent: #8b5cf6;
+    --color-accent-hover: #7c3aed;
+    --color-accent-soft: #241a3d;
+    --color-accent-soft-fg: #c4b5fd;
+    --color-danger: #ef4444;
+    --color-danger-soft: #2c1517;
+    --color-danger-soft-fg: #fca5a5;
+    --color-warning-soft: #2b2112;
+    --color-warning-soft-fg: #fcd34d;
+    --color-chart-1: #a78bfa;
+    --color-chart-2: #38bdf8;
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-canvas text-fg antialiased;
+  }
+  ::selection {
+    @apply bg-accent/25;
+  }
+}
+
+/* Shared form control look for input, select and textarea. */
+@utility control {
+  @apply w-full rounded-lg border border-border bg-surface px-3 text-sm text-fg shadow-xs transition outline-none placeholder:text-muted/70 focus:border-accent focus:ring-3 focus:ring-accent/20 disabled:opacity-60;
+}

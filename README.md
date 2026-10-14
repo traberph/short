@@ -1,55 +1,95 @@
-# Short
+# short
 
-This tool is intended to provide simple URL shortening and link aggregation functionality.
-Users should be able to create shortened links for example to generate smaller QR codes with the built-in QR code generator.
+A small self-hosted URL shortener and link-page tool for a handful of people, with login through Authentik (OIDC).
 
-The admin panel is a PWA for easy access and management of the links even on mobile devices.
+- **Short links**: `/<code>` for admins, `/<username>/<code>` for everyone else. Codes can be custom or random, and destinations can be edited later.
+- **Link pages**: a "link in bio" page with avatar, link buttons, Markdown text blocks and custom colours. Blocks are reordered by drag and drop.
+- **QR codes**: choose the error correction level and colours, then download as PNG or SVG.
+- **Privacy-friendly stats**: clicks per day, daily unique visitors, last visit. No raw IPs are stored, the visitor hash uses a salt that rotates daily, and individual clicks are deleted after 90 days.
+- **API with personal access tokens**: for scripts and iOS Shortcuts.
+- **Mobile-friendly admin UI**, installable as a PWA. Everything runs as a single container with SQLite.
 
-It is powered by nextjs and postgres.  
-Authentication is handled via OAuth2.
+See [REQUIREMENTS.md](REQUIREMENTS.md) for the full feature list.
 
-# Configuration
+## URLs
 
-To configure short environment variables are used.  
-Modify the `.env.template` to your needs.  
-Postgres and Auth variables are mandatory for short to work.
+| Path | What |
+|---|---|
+| `/` | Redirects to the pinned page, if an admin pinned one |
+| `/<code>` | Root links and pages (admins) |
+| `/<username>/<code>` | User links and pages |
+| `/~/` | Admin UI |
+| `/~/api/…` | JSON API |
+| `/~/health` | Health check |
 
-### logo.dev integration
-Logo.dev can be used to automatically fetch logos for the urls on the aggregation pages.  
-To use Logo.dev an Token is required which can be requested via their webpage for free.  
-If Logo.dev is enabled the attribution is automatically added to the footer.  
-If `LOGO_DEV_TOKEN`is not set the first letter of the hostname is used as improvised logo.
+## Roles
 
-### traberph/short attribution
-As default in the footer is an attribution link to this GitHub repo.  
-This can be disabled using the `DISABLE_ATTRIBUTION=true`.  
+- **Users** can create and manage links and link pages under `/<their username>/`. Link pages can only use their own links.
+- **Admins** are members of the Authentik group `ADMIN_GROUP`. They can additionally create root links, pin a page to `/`, and view, edit and delete everything.
 
+The username is Authentik's `preferred_username`, fixed at the first login. Usernames have to be URL-safe (`A-Z a-z 0-9 . _ -`). Root codes that match a username are blocked, and the dashboard warns admins about conflicts.
 
-# Example Page
-- optimized for mobile view
-- simple and clean design
+## Setup
 
-![example page](.assets/screenshot_home.png)
+### 1. Authentik
 
-# Easy to use Admin Interface
+Create an **OAuth2/OpenID provider** and an application for it:
 
-## Overview Page
+- Client type: *Confidential*
+- Redirect URI: `https://<your domain>/~/auth/callback`
+- Scopes: `openid`, `profile`, `email` (the default `profile` mapping includes the `groups` claim)
+- Create a group (e.g. `short-admins`) for admins.
+- Use the application's policy bindings to control who can log in at all.
 
-- get an overview of all links and their views
+### 2. Configuration
 
-![admin landing page](.assets/admin01.png)
+Copy `.env.template` to `.env` and fill it in:
 
-## Redirect Pages
+| Variable | Required | Description |
+|---|---|---|
+| `BASE_URL` | yes | Public URL, e.g. `https://short.example.com` |
+| `OIDC_ISSUER` | yes | The provider's issuer URL, e.g. `https://auth.example.com/application/o/short/` |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | yes | From the Authentik provider |
+| `SESSION_SECRET` | yes | At least 32 random characters: `openssl rand -base64 32` |
+| `ADMIN_GROUP` | | Authentik group for admins, default `short-admins` |
+| `TIMEZONE` | | Timezone for "today" and the daily stats, default `UTC` |
+| `TRUST_PROXY` | | `true` behind a reverse proxy, so `X-Forwarded-For` is used for the visitor IP |
+| `DATA_DIR` | | Database and uploads, default `./data` (`/data` in Docker) |
+| `LOGO_DEV_TOKEN` | | Shows website logos on link page buttons via [logo.dev](https://logo.dev) (adds an attribution) |
+| `DISABLE_ATTRIBUTION` | | `true` hides the "powered by" footer |
 
-- a simple redirect to a target url
+### 3. Run
 
-![custom pages](.assets/admin03.png)
+```sh
+mkdir -p data && sudo chown 1000:1000 data   # the container runs as uid 1000
+docker compose up -d
+```
 
-# Custom Pages
+Put it behind a reverse proxy with TLS. Back up `data/`: it holds the SQLite database (`short.db`) and the uploaded avatars. Database migrations run automatically on startup.
 
-- an aggregation of multiple redirect pages
-- (future work - text blocks; image blocks)
+## API
 
-![redirect pages](.assets/admin02.png)
+The admin UI uses the same JSON API. Create a token under **API tokens**; it has the same permissions as your account.
 
+```sh
+curl -X POST https://short.example.com/~/api/pages \
+  -H "Authorization: Bearer short_…" \
+  -H "Content-Type: application/json" \
+  -d '{"kind":"redirect","dest":"https://example.com","code":"optional"}'
+```
 
+Main endpoints: `GET/POST /pages`, `GET/PATCH/DELETE /pages/:id`, `GET/DELETE /pages/:id/stats?days=7|30|90`, `POST /pages/:id/blocks`, `PUT /pages/:id/blocks/order`, `PATCH/DELETE /blocks/:id`, `PUT /pages/:id/avatar`, `GET/POST/DELETE /tokens`.
+Admin only: `PUT/DELETE /pin`, `GET /users`, `GET /conflicts`.
+
+## Development
+
+```sh
+pnpm install
+cp .env.template .env      # BASE_URL=http://localhost:5173 for dev
+pnpm dev                   # API on :3000, admin UI with hot reload on http://localhost:5173/~/
+pnpm test                  # vitest
+pnpm typecheck
+pnpm db:generate           # after changing src/server/db/schema.ts
+```
+
+Stack: Node 24, [Hono](https://hono.dev), SQLite with [Drizzle](https://orm.drizzle.team), [openid-client](https://github.com/panva/openid-client), React + Vite + Tailwind for the admin UI.
