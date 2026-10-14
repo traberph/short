@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Me, PageKind, PageSummary } from "../../shared/api-types.js";
-import { api, ApiRequestError, errorMessage, useApi } from "../api.js";
+import { api, ApiRequestError, errorMessage } from "../api.js";
 import { Button } from "./ui/button.js";
 import { Dialog } from "./ui/dialog.js";
 import { Field, Input, PrefixInput, Select } from "./ui/form.js";
@@ -24,15 +24,17 @@ export function CreatePageDialog({
   open,
   onClose,
   onCreated,
+  fixedNamespace,
 }: {
   kind: PageKind;
   me: Me;
   open: boolean;
   onClose: () => void;
   onCreated: (page: PageSummary) => void;
+  /** Create in this namespace without offering a choice, e.g. when an admin manages another user. */
+  fixedNamespace?: string;
 }) {
-  const users = useApi<string[]>(me.isAdmin && open ? "/users" : null);
-  const [namespace, setNamespace] = useState(me.username);
+  const [namespace, setNamespace] = useState(fixedNamespace ?? me.username);
   const [code, setCode] = useState("");
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -102,16 +104,12 @@ export function CreatePageDialog({
         </Field>
       )}
 
-      {me.isAdmin && (
-        <Field label="Namespace" hint="Root links are only available to admins." error={errors.namespace}>
+      {me.isAdmin && fixedNamespace === undefined && (
+        <Field label="Namespace" error={errors.namespace}>
           {(id) => (
             <Select id={id} value={namespace} onChange={(e) => setNamespace(e.target.value)}>
-              <option value="">Root (/)</option>
-              {(users.data ?? [me.username]).map((u) => (
-                <option key={u} value={u}>
-                  {u === me.username ? `${u} (you)` : u}
-                </option>
-              ))}
+              <option value={me.username}>/{me.username}/ (yours)</option>
+              <option value="">Root /</option>
             </Select>
           )}
         </Field>

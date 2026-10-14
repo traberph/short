@@ -6,6 +6,7 @@ import { CreatePageDialog } from "../components/CreatePageDialog.js";
 import { Button, buttonClass } from "../components/ui/button.js";
 import { DomainIcon, Link, Stat } from "../components/ui/misc.js";
 import { Alert, Card, CardHeader, EmptyState, PageHeader, Skeleton } from "../components/ui/surface.js";
+import { isMine } from "../lib/scope.js";
 import { detailPath, navigate } from "../router.js";
 
 function TopPages({ pages }: { pages: PageSummary[] }) {
@@ -47,11 +48,12 @@ export function OverviewScreen({ me }: { me: Me }) {
   const conflicts = useApi<Conflict[]>(me.isAdmin ? "/conflicts" : null);
   const [creating, setCreating] = useState<PageKind | null>(null);
 
-  const all = pages.data ?? [];
+  // Admins see their own and root content here; other users' content is under Administration.
+  const all = (pages.data ?? []).filter((p) => isMine(p, me));
   const links = all.filter((p) => p.kind === "redirect");
   const linkPages = all.filter((p) => p.kind === "linkpage");
   const clicks = all.reduce((sum, p) => sum + p.totalClicks, 0);
-  const scope = me.isAdmin ? "all users" : `in /${me.username}/`;
+  const scope = me.isAdmin ? "yours & root" : `in /${me.username}/`;
 
   return (
     <>
@@ -76,7 +78,7 @@ export function OverviewScreen({ me }: { me: Me }) {
             {conflicts.data.map((c, i) => (
               <span key={c.pageId}>
                 {i > 0 && ", "}
-                <Link to={detailPath({ id: c.pageId, kind: "redirect" }, "settings")} className="font-mono underline">
+                <Link to={detailPath({ id: c.pageId, kind: "redirect", namespace: "" }, "settings")} className="font-mono underline">
                   /{c.username}
                 </Link>
               </span>

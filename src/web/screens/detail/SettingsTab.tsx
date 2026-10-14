@@ -8,7 +8,7 @@ import { Field, Input, PrefixInput } from "../../components/ui/form.js";
 import { CopyButton, publicUrl } from "../../components/ui/misc.js";
 import { Alert, Card, CardBody, CardFooter, CardHeader } from "../../components/ui/surface.js";
 import { useAction, useToast } from "../../components/ui/toast.js";
-import { listPath, navigate } from "../../router.js";
+import { backPath, navigate } from "../../router.js";
 
 function DestinationCard({ page, onChange }: { page: PageDetail; onChange: (page: PageDetail) => void }) {
   const [dest, setDest] = useState(page.dest ?? "");
@@ -153,7 +153,7 @@ export function SettingsTab({
     if (!ok) return;
     void run(async () => {
       await api("DELETE", `/pages/${page.id}`);
-      navigate(listPath(page.kind));
+      navigate(backPath(page));
     }, `Deleted ${page.path}`);
   };
 

@@ -5,7 +5,7 @@ import { useApi } from "../../api.js";
 import { buttonClass } from "../../components/ui/button.js";
 import { CopyButton, DomainIcon, Link, publicUrl, Tabs } from "../../components/ui/misc.js";
 import { Badge, EmptyState, Skeleton } from "../../components/ui/surface.js";
-import { detailPath, listPath } from "../../router.js";
+import { backPath, detailPath, listPath, replacePath } from "../../router.js";
 import { AnalyticsTab } from "./AnalyticsTab.js";
 import { AppearanceTab } from "./AppearanceTab.js";
 import { ContentTab } from "./ContentTab.js";
@@ -30,10 +30,13 @@ export function DetailScreen({ id, kind, tab, me }: { id: number; kind: PageKind
   const page = useApi<PageDetail>(`/pages/${id}`);
   const p = page.data;
 
-  // Links like /~/links/<id of a link page> are corrected to the right section.
+  // Correct the URL to the canonical one, e.g. /~/links/<id of a link page>, or another user's
+  // page opened outside Administration.
   useEffect(() => {
-    if (p && p.kind !== kind) history.replaceState(null, "", detailPath(p, tab));
-  }, [p, kind, tab]);
+    if (!p) return;
+    const canonical = detailPath(p, tab);
+    if (location.pathname.replace(/\/+$/, "") !== canonical) replacePath(canonical);
+  }, [p, tab]);
 
   if (page.error) {
     return (
@@ -67,9 +70,21 @@ export function DetailScreen({ id, kind, tab, me }: { id: number; kind: PageKind
   return (
     <>
       <nav className="mb-3 flex items-center gap-1 text-sm text-muted" aria-label="Breadcrumb">
-        <Link to={listPath(p.kind)} className="hover:text-fg">
-          {p.kind === "redirect" ? "Short links" : "Link pages"}
-        </Link>
+        {backPath(p) === listPath(p.kind) ? (
+          <Link to={listPath(p.kind)} className="hover:text-fg">
+            {p.kind === "redirect" ? "Short links" : "Link pages"}
+          </Link>
+        ) : (
+          <>
+            <Link to="/~/admin" className="hover:text-fg">
+              Administration
+            </Link>
+            <ChevronRight className="size-3.5" />
+            <Link to={backPath(p)} className="hover:text-fg">
+              {p.namespace}
+            </Link>
+          </>
+        )}
         <ChevronRight className="size-3.5" />
         <span className="truncate text-fg">{p.path}</span>
       </nav>

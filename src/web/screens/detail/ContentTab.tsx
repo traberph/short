@@ -26,6 +26,13 @@ function hostnameOf(url: string | null | undefined): string {
   }
 }
 
+// Groups links by namespace, with the page's own namespace first (admins can link across namespaces).
+function groupByNamespace(links: PageSummary[], first: string): [string, PageSummary[]][] {
+  const groups = new Map<string, PageSummary[]>([[first, []]]);
+  for (const link of links) groups.set(link.namespace, [...(groups.get(link.namespace) ?? []), link]);
+  return [...groups].filter(([, l]) => l.length > 0);
+}
+
 function BlockDialog({
   editing,
   page,
@@ -166,10 +173,14 @@ function BlockDialog({
                   }}
                 >
                   <option value="">Choose a short link…</option>
-                  {targets.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.path} → {p.dest}
-                    </option>
+                  {groupByNamespace(targets, page.namespace).map(([ns, links]) => (
+                    <optgroup key={ns} label={ns ? `/${ns}/` : "Root /"}>
+                      {links.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.path} → {p.dest}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </Select>
               )}

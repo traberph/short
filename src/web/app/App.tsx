@@ -4,8 +4,9 @@ import { useApi } from "../api.js";
 import { buttonClass } from "../components/ui/button.js";
 import { Link } from "../components/ui/misc.js";
 import { EmptyState } from "../components/ui/surface.js";
-import { parseRoute, usePath } from "../router.js";
+import { parseRoute, setViewer, usePath } from "../router.js";
 import { AdminScreen } from "../screens/AdminScreen.js";
+import { AdminUserScreen } from "../screens/AdminUserScreen.js";
 import { DetailScreen } from "../screens/detail/DetailScreen.js";
 import { ListScreen } from "../screens/ListScreen.js";
 import { OverviewScreen } from "../screens/OverviewScreen.js";
@@ -61,6 +62,7 @@ export function App() {
     location.href = "/~/";
   };
 
+  setViewer(me.data.username);
   const route = parseRoute(path);
   let screen;
   switch (route.name) {
@@ -77,7 +79,10 @@ export function App() {
       screen = <TokensScreen />;
       break;
     case "admin":
-      screen = me.data.isAdmin ? <AdminScreen /> : null;
+      screen = me.data.isAdmin ? <AdminScreen me={me.data} /> : null;
+      break;
+    case "adminUser":
+      screen = me.data.isAdmin ? <AdminUserScreen key={route.username} username={route.username} me={me.data} /> : null;
       break;
   }
 

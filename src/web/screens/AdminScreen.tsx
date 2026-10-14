@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { PinOff, TriangleAlert, Users } from "lucide-react";
-import type { Conflict, PageSummary } from "../../shared/api-types.js";
+import { ChevronRight, PinOff, TriangleAlert, Users } from "lucide-react";
+import type { Conflict, Me, PageSummary } from "../../shared/api-types.js";
 import { api, useApi } from "../api.js";
 import { Button } from "../components/ui/button.js";
 import { Select } from "../components/ui/form.js";
 import { Link } from "../components/ui/misc.js";
 import { Badge, Card, CardBody, CardHeader, EmptyState, PageHeader, Skeleton } from "../components/ui/surface.js";
 import { useAction } from "../components/ui/toast.js";
-import { detailPath } from "../router.js";
+import { adminUserPath, detailPath } from "../router.js";
 
 function HomepageCard({ pages, reload }: { pages: PageSummary[]; reload: () => Promise<void> }) {
   const pinned = pages.find((p) => p.pinned);
@@ -52,19 +52,61 @@ function HomepageCard({ pages, reload }: { pages: PageSummary[]; reload: () => P
   );
 }
 
-export function AdminScreen() {
+function UsersCard({ users, pages, me }: { users: string[] | undefined; pages: PageSummary[] | undefined; me: Me }) {
+  const others = users?.filter((u) => u !== me.username);
+  const stats = (u: string) => {
+    const theirs = (pages ?? []).filter((p) => p.namespace === u);
+    const links = theirs.filter((p) => p.kind === "redirect").length;
+    const linkPages = theirs.length - links;
+    const clicks = theirs.reduce((sum, p) => sum + p.totalClicks, 0);
+    return `${links} ${links === 1 ? "link" : "links"} · ${linkPages} ${linkPages === 1 ? "page" : "pages"} · ${clicks.toLocaleString()} clicks`;
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader
+        title="Users"
+        description="Open a user to manage their short links and link pages. Your own and root content is under Short links and Link pages."
+        actions={others && <Badge>{others.length}</Badge>}
+      />
+      {!others ? (
+        <Skeleton className="m-5 h-10" />
+      ) : others.length ? (
+        <ul className="divide-y divide-border">
+          {others.map((u) => (
+            <li key={u} className="group relative flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface-2/60">
+              <span className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent-soft-fg uppercase">
+                {u.charAt(0)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <Link to={adminUserPath(u)} className="font-medium after:absolute after:inset-0">
+                  {u}
+                </Link>
+                <div className="truncate text-xs text-muted">{pages ? stats(u) : " "}</div>
+              </div>
+              <ChevronRight className="size-4 text-muted transition-transform group-hover:translate-x-0.5" />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EmptyState icon={<Users />} title="No other users yet" description="Users appear here after their first sign-in." />
+      )}
+    </Card>
+  );
+}
+
+export function AdminScreen({ me }: { me: Me }) {
   const pages = useApi<PageSummary[]>("/pages");
   const users = useApi<string[]>("/users");
   const conflicts = useApi<Conflict[]>("/conflicts");
 
-  const countByUser = new Map<string, number>();
-  for (const p of pages.data ?? []) countByUser.set(p.namespace, (countByUser.get(p.namespace) ?? 0) + 1);
-
   return (
     <>
-      <PageHeader title="Administration" description="Settings that affect the whole instance." />
+      <PageHeader title="Administration" description="Other users' content and settings that affect the whole instance." />
 
       <div className="flex flex-col gap-6">
+        <UsersCard users={users.data} pages={pages.data} me={me} />
+
         {pages.data ? <HomepageCard pages={pages.data} reload={pages.reload} /> : <Skeleton className="h-36 rounded-xl" />}
 
         <Card>
@@ -80,7 +122,7 @@ export function AdminScreen() {
                 <li key={c.pageId} className="flex items-center gap-3 px-5 py-3">
                   <TriangleAlert className="size-4 text-warning-soft-fg" />
                   <span className="flex-1 font-mono text-sm">/{c.username}</span>
-                  <Link to={detailPath({ id: c.pageId, kind: "redirect" }, "settings")} className="text-sm text-accent hover:underline">
+                  <Link to={detailPath({ id: c.pageId, kind: "redirect", namespace: "" }, "settings")} className="text-sm text-accent hover:underline">
                     Open root link
                   </Link>
                 </li>
@@ -90,34 +132,6 @@ export function AdminScreen() {
             <CardBody className="text-sm text-muted">No conflicts.</CardBody>
           )}
         </Card>
-
-        <Card className="overflow-hidden">
-          <CardHeader
-            title="Users"
-            description="Everyone who has signed in. Admin rights and usernames are managed in Authentik."
-            actions={users.data && <Badge>{users.data.length}</Badge>}
-          />
-          {!users.data ? (
-            <Skeleton className="m-5 h-10" />
-          ) : users.data.length ? (
-            <ul className="divide-y divide-border">
-              {users.data.map((u) => (
-                <li key={u} className="flex items-center gap-3 px-5 py-3">
-                  <span className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent-soft-fg uppercase">
-                    {u.charAt(0)}
-                  </span>
-                  <span className="flex-1 font-mono text-sm">/{u}/</span>
-                  <span className="text-sm text-muted">
-                    {countByUser.get(u) ?? 0} {(countByUser.get(u) ?? 0) === 1 ? "page" : "pages"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon={<Users />} title="No users yet" />
-          )}
-        </Card>
-
       </div>
     </>
   );

@@ -15,8 +15,12 @@ function sectionOf(route: Route): Section | null {
     case "tokens":
     case "admin":
       return route.name;
+    case "adminUser":
+      return "admin";
     case "list":
     case "detail":
+      // Other users' pages are opened from Administration and stay in that section.
+      if (route.name === "detail" && route.owner) return "admin";
       return route.kind === "redirect" ? "links" : "pages";
     default:
       return null;
