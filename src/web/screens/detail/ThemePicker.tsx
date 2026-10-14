@@ -5,7 +5,7 @@ import type { Theme } from "../../../shared/validation.js";
 import { api, errorMessage, useApi } from "../../api.js";
 import { Button } from "../../components/ui/button.js";
 import { useConfirm } from "../../components/ui/dialog.js";
-import { ColorInput, Input, Segmented } from "../../components/ui/form.js";
+import { ColorInput, Input } from "../../components/ui/form.js";
 import { useToast } from "../../components/ui/toast.js";
 import { cx } from "../../lib/cx.js";
 import { parseCoolorsInput, themeFromPalette, TRENDING_PALETTES, type Variant } from "../../lib/palette.js";
@@ -59,7 +59,29 @@ function PresetCard({ name, theme, selected, onClick }: { name: string; theme: T
   );
 }
 
-// A palette: each color opens the role menu, the name row applies the whole palette.
+// Miniature of a link page (background, a text line and a button) that applies one version of a palette.
+function VariantThumb({ theme, label, selected, onClick }: { theme: Theme; label: string; selected: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      aria-label={label}
+      title={label}
+      className={cx(
+        "flex h-8 w-11 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border px-1.5 transition",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+        selected ? "border-accent ring-2 ring-accent/40" : "border-border hover:scale-105 hover:border-border-strong",
+      )}
+      style={{ background: theme.background }}
+    >
+      <span className="h-1 w-3/5 rounded-full" style={{ background: theme.text }} />
+      <span className="h-2 w-full rounded-sm" style={{ background: theme.button }} />
+    </button>
+  );
+}
+
+// A palette: each color opens the role menu, the two thumbnails apply a dark or light version of it.
 function PaletteCard({
   colors,
   label,
@@ -70,14 +92,14 @@ function PaletteCard({
 }: {
   colors: string[];
   label: string;
-  selected: boolean;
-  onApply: () => void;
+  selected: Variant | null;
+  onApply: (variant: Variant) => void;
   onPickColor: (color: string, anchor: HTMLElement) => void;
   onRemove?: () => void;
 }) {
   return (
-    <div className={cardClass(selected)}>
-      <div className="flex h-14">
+    <div className={cardClass(selected !== null)}>
+      <div className="flex h-12">
         {colors.map((c, i) => (
           <button
             key={i}
@@ -91,23 +113,24 @@ function PaletteCard({
           />
         ))}
       </div>
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={onApply}
-          aria-pressed={selected}
-          className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-2 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-surface-2/60"
-        >
-          <span className="truncate">{label}</span>
-          {selected && <Check className="size-4 shrink-0 text-accent" />}
-        </button>
+      <div className="flex items-center gap-1.5 py-2 pr-2 pl-3">
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
+        {(["dark", "light"] as const).map((v) => (
+          <VariantThumb
+            key={v}
+            theme={themeFromPalette(colors, v)}
+            label={`Use ${label} with a ${v} background`}
+            selected={selected === v}
+            onClick={() => onApply(v)}
+          />
+        ))}
         {onRemove && (
           <button
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${label}`}
             title="Remove palette"
-            className="cursor-pointer self-stretch px-2.5 text-muted transition-colors hover:bg-surface-2/60 hover:text-danger"
+            className="ml-0.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-danger"
           >
             <X className="size-4" />
           </button>
@@ -222,9 +245,8 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
   const saved = useApi<SavedPalette[]>("/palettes");
   const toast = useToast();
   const confirm = useConfirm();
-  const [variant, setVariant] = useState<Variant>("dark");
-  // The palette the current theme was generated from, so switching dark/light can re-map it.
-  const [source, setSource] = useState<string[] | null>(null);
+  // The palette version the current theme was generated from, to mark it as selected.
+  const [source, setSource] = useState<{ colors: string[]; variant: Variant } | null>(null);
   const [link, setLink] = useState("");
   const [linkError, setLinkError] = useState<string>();
   const [importing, setImporting] = useState(false);
@@ -232,21 +254,20 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
 
   const toggleMenu = (color: string, anchor: HTMLElement) => setMenu((m) => (m?.anchor === anchor ? null : { color, anchor }));
 
-  const applyPalette = (colors: string[], v = variant) => {
-    setSource(colors);
-    onChange(themeFromPalette(colors, v));
-  };
-  const changeVariant = (v: Variant) => {
-    setVariant(v);
-    if (source) onChange(themeFromPalette(source, v));
+  const applyPalette = (colors: string[], variant: Variant) => {
+    setSource({ colors, variant });
+    onChange(themeFromPalette(colors, variant));
   };
   const setColor = (role: keyof Theme, color: string) => {
     setSource(null);
     onChange({ ...theme, [role]: color });
   };
 
-  const isSelected = (colors: string[]) =>
-    !!source && paletteKey(source) === paletteKey(colors) && sameTheme(themeFromPalette(colors, variant), theme);
+  // Which version of this palette is in use, if any (editing a single color deselects it).
+  const selectedVariant = (colors: string[]): Variant | null =>
+    source && paletteKey(source.colors) === paletteKey(colors) && sameTheme(themeFromPalette(colors, source.variant), theme)
+      ? source.variant
+      : null;
 
   const importLink = async () => {
     const colors = parseCoolorsInput(link);
@@ -258,7 +279,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
     try {
       await api<SavedPalette>("POST", "/palettes", { colors });
       await saved.reload();
-      applyPalette(colors);
+      applyPalette(colors, "dark");
       setLink("");
       setLinkError(undefined);
     } catch (err) {
@@ -280,7 +301,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
     }
   };
 
-  const pickHint = "Click a name to use the whole palette, or a single color to assign it.";
+  const pickHint = "Pick the dark or light version of a palette, or click a single color to use it for one part.";
 
   return (
     <div className="flex flex-col gap-7">
@@ -303,20 +324,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
       </div>
 
       <div>
-        <SectionLabel
-          hint={pickHint}
-          actions={
-            <Segmented
-              ariaLabel="Background for palettes"
-              value={variant}
-              onChange={changeVariant}
-              options={[
-                { value: "dark", label: "Dark background" },
-                { value: "light", label: "Light background" },
-              ]}
-            />
-          }
-        >
+        <SectionLabel hint={pickHint}>
           Trending on{" "}
           <a href="https://coolors.co/palettes/trending" target="_blank" rel="noreferrer" className="text-accent hover:underline">
             coolors.co
@@ -328,8 +336,8 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
               key={p.name}
               label={p.name}
               colors={p.colors}
-              selected={isSelected(p.colors)}
-              onApply={() => applyPalette(p.colors)}
+              selected={selectedVariant(p.colors)}
+              onApply={(v) => applyPalette(p.colors, v)}
               onPickColor={toggleMenu}
             />
           ))}
@@ -376,8 +384,8 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
                 key={p.id}
                 label={`Imported ${new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
                 colors={p.colors}
-                selected={isSelected(p.colors)}
-                onApply={() => applyPalette(p.colors)}
+                selected={selectedVariant(p.colors)}
+                onApply={(v) => applyPalette(p.colors, v)}
                 onPickColor={toggleMenu}
                 onRemove={() => void removePalette(p)}
               />
