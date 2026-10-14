@@ -101,6 +101,12 @@ export const statsRangeSchema = z.object({
   days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(7),
 });
 
+export const MAX_PALETTES = 50;
+
+export const createPaletteSchema = z.object({
+  colors: z.array(hexColor).min(2).max(10),
+});
+
 export const pinSchema = z.object({ pageId: z.number().int().positive() });
 
 export const createTokenSchema = z.object({ name: z.string().trim().min(1).max(100) });

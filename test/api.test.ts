@@ -318,6 +318,38 @@ describe("redirects and stats", () => {
   });
 });
 
+describe("saved palettes", () => {
+  it("saves palettes per user without duplicates", async () => {
+    const { user } = setup();
+    const alice = user("alice");
+    const bob = user("bob");
+    const colors = ["#264653", "#2A9D8F", "#e9c46a"];
+
+    const created = await alice.api("POST", "/palettes", { colors });
+    expect(created.status).toBe(201);
+    const palette = await created.json();
+    expect(palette.colors).toEqual(["#264653", "#2a9d8f", "#e9c46a"]);
+
+    const again = await alice.api("POST", "/palettes", { colors: ["#264653", "#2a9d8f", "#E9C46A"] });
+    expect(again.status).toBe(200);
+    expect((await again.json()).id).toBe(palette.id);
+
+    expect(await (await alice.api("GET", "/palettes")).json()).toHaveLength(1);
+    expect(await (await bob.api("GET", "/palettes")).json()).toEqual([]);
+    expect((await bob.api("DELETE", `/palettes/${palette.id}`)).status).toBe(404);
+    expect((await alice.api("DELETE", `/palettes/${palette.id}`)).status).toBe(204);
+    expect(await (await alice.api("GET", "/palettes")).json()).toEqual([]);
+  });
+
+  it("rejects invalid palettes", async () => {
+    const { user } = setup();
+    const alice = user("alice");
+    expect((await alice.api("POST", "/palettes", { colors: ["#264653"] })).status).toBe(400);
+    expect((await alice.api("POST", "/palettes", { colors: ["#264653", "red"] })).status).toBe(400);
+    expect((await alice.api("POST", "/palettes", { colors: Array(11).fill("#264653") })).status).toBe(400);
+  });
+});
+
 describe("api tokens", () => {
   it("creates, lists and revokes the caller's tokens only", async () => {
     const { app, user } = setup();

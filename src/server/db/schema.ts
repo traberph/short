@@ -103,6 +103,20 @@ export const apiTokens = sqliteTable("api_tokens", {
   lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
 });
 
+// Color palettes a user imported (e.g. from coolors.co), stored as lowercase "rrggbb-rrggbb-…".
+export const palettes = sqliteTable(
+  "palettes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    colors: text("colors").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("palettes_user_colors").on(t.userId, t.colors)],
+);
+
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),

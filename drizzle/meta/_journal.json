@@ -15,6 +15,13 @@
       "when": 1791988240968,
       "tag": "0001_page_show_logos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791989055221,
+      "tag": "0002_user_palettes",
+      "breakpoints": true
     }
   ]
 }

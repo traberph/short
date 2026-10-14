@@ -5,6 +5,7 @@ import type { z } from "zod";
 import type { ApiToken, CreatedToken, Me } from "../shared/api-types.js";
 import {
   createBlockSchema,
+  createPaletteSchema,
   createPageSchema,
   createTokenSchema,
   pinSchema,
@@ -19,6 +20,7 @@ import { createApiToken } from "./auth/sessions.js";
 import { apiTokens } from "./db/schema.js";
 import { forbidden, HttpError, notFound } from "./lib/errors.js";
 import { removeMedia, saveAvatar } from "./lib/media.js";
+import { deletePalette, listPalettes, savePalette } from "./lib/palettes.js";
 import * as pages from "./lib/pages.js";
 import { getStats, resetStats } from "./lib/stats.js";
 
@@ -130,6 +132,18 @@ export function apiRoutes(deps: Deps) {
         const id = idParam(c.req.param("id"));
         pages.assertCanManage(db, c.var.actor, id);
         resetStats(db, id);
+        return c.body(null, 204);
+      })
+
+      // Saved color palettes (always the caller's own)
+      .get("/palettes", (c) => c.json(listPalettes(db, c.var.actor.id)))
+      .post("/palettes", async (c) => {
+        const { colors } = parse(createPaletteSchema, await jsonBody(c));
+        const { palette, created } = savePalette(db, c.var.actor.id, colors);
+        return c.json(palette, created ? 201 : 200);
+      })
+      .delete("/palettes/:id", (c) => {
+        deletePalette(db, c.var.actor.id, idParam(c.req.param("id")));
         return c.body(null, 204);
       })
 

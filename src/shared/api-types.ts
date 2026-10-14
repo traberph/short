@@ -52,6 +52,12 @@ export interface PageStats {
   series: StatsDay[];
 }
 
+export interface SavedPalette {
+  id: number;
+  colors: string[]; // "#rrggbb"
+  createdAt: string;
+}
+
 export interface ApiToken {
   id: number;
   name: string;
