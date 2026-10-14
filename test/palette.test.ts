@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { contrast, parseCoolorsInput, themeFromPalette, TRENDING_PALETTES } from "../src/web/lib/palette.js";
+import { contrast, parseCoolorsInput, themeFromPalette } from "../src/web/lib/palette.js";
+
+// A mix of real coolors.co palettes: dark, light, pastel and a 10-color one.
+const SAMPLE_PALETTES = [
+  "780000-c1121f-fdf0d5-003049-669bbc",
+  "606c38-283618-fefae0-dda15e-bc6c25",
+  "cdb4db-ffc8dd-ffafcc-bde0fe-a2d2ff",
+  "001219-005f73-0a9396-94d2bd-e9d8a6-ee9b00-ca6702-bb3e03-ae2012-9b2226",
+].map((p) => parseCoolorsInput(p)!);
 
 describe("coolors.co palettes", () => {
   it("parses palette and generator links as well as bare color lists", () => {
@@ -18,8 +26,8 @@ describe("coolors.co palettes", () => {
     expect(parseCoolorsInput("zzzzzz-2a9d8f")).toBeNull();
   });
 
-  it("maps every trending palette to a readable theme in both variants", () => {
-    for (const { colors } of TRENDING_PALETTES) {
+  it("maps palettes to a readable theme in both variants", () => {
+    for (const colors of SAMPLE_PALETTES) {
       for (const variant of ["dark", "light"] as const) {
         const theme = themeFromPalette(colors, variant);
         expect(contrast(theme.text, theme.background)).toBeGreaterThanOrEqual(4.5);

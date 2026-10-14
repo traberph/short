@@ -3,7 +3,7 @@
 A small self-hosted URL shortener and link-page tool for a handful of people, with login through Authentik (OIDC).
 
 - **Short links**: `/<code>` for admins, `/<username>/<code>` for everyone else. Codes can be custom or random, and both codes and destinations can be edited later.
-- **Link pages**: a "link in bio" page with avatar, link buttons, Markdown text blocks and colour themes, including built-in and pasted [coolors.co](https://coolors.co) palettes. Blocks are reordered by drag and drop.
+- **Link pages**: a "link in bio" page with avatar, link buttons, Markdown text blocks and colour themes, including palettes imported from [coolors.co](https://coolors.co). Blocks are reordered by drag and drop.
 - **QR codes**: choose the error correction level and colours, then download as PNG or SVG.
 - **Privacy-friendly stats**: clicks per day, daily unique visitors, last visit. No raw IPs are stored, the visitor hash uses a salt that rotates daily, and individual clicks are deleted after 90 days.
 - **API with personal access tokens**: for scripts and iOS Shortcuts.

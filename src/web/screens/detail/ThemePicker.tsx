@@ -8,7 +8,7 @@ import { useConfirm } from "../../components/ui/dialog.js";
 import { ColorInput, Input } from "../../components/ui/form.js";
 import { useToast } from "../../components/ui/toast.js";
 import { cx } from "../../lib/cx.js";
-import { parseCoolorsInput, themeFromPalette, TRENDING_PALETTES, type Variant } from "../../lib/palette.js";
+import { parseCoolorsInput, themeFromPalette, type Variant } from "../../lib/palette.js";
 
 export const COLOR_FIELDS: [keyof Theme, string][] = [
   ["background", "Background"],
@@ -237,7 +237,7 @@ type OpenMenu =
   | { kind: "variant"; colors: string[]; label: string; anchor: HTMLElement }
   | null;
 
-// Theme picker: basic presets, trending and saved coolors.co palettes, and custom colors.
+// Theme picker: basic presets, the user's saved coolors.co palettes, and custom colors.
 export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (theme: Theme) => void }) {
   const saved = useApi<SavedPalette[]>("/palettes");
   const toast = useToast();
@@ -326,25 +326,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
       </div>
 
       <div>
-        <SectionLabel hint={pickHint}>
-          Colourful
-        </SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
-          {TRENDING_PALETTES.map((p) => (
-            <PaletteCard
-              key={p.name}
-              label={p.name}
-              colors={p.colors}
-              selected={selectedVariant(p.colors)}
-              onOpenVariants={(anchor) => toggleMenu({ kind: "variant", colors: p.colors, label: p.name, anchor })}
-              onPickColor={(color, anchor) => toggleMenu({ kind: "color", color, anchor })}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <SectionLabel hint="Paste a coolors.co palette link to save it to your palettes.">Your palettes</SectionLabel>
+        <SectionLabel hint={saved.data?.length ? pickHint : "Import palettes from coolors.co to use them on your pages."}>Your palettes</SectionLabel>
         <form
           className="flex gap-2"
           onSubmit={(e) => {

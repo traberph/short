@@ -2,19 +2,6 @@ import type { Theme } from "../../shared/validation.js";
 
 // Turning coolors.co palettes (5–10 colors) into a link page theme (4 roles).
 
-export interface Palette {
-  name: string;
-  colors: string[]; // "#rrggbb"
-}
-
-// Snapshot of the top 4 on https://coolors.co/palettes/trending (October 2026).
-export const TRENDING_PALETTES: Palette[] = [
-  { name: "Fiery Ocean", colors: hexList("780000-c1121f-fdf0d5-003049-669bbc") },
-  { name: "Olive Garden Feast", colors: hexList("606c38-283618-fefae0-dda15e-bc6c25") },
-  { name: "Pastel Dreamland", colors: hexList("cdb4db-ffc8dd-ffafcc-bde0fe-a2d2ff") },
-  { name: "Ocean Sunset", colors: hexList("001219-005f73-0a9396-94d2bd-e9d8a6-ee9b00-ca6702-bb3e03-ae2012-9b2226") },
-];
-
 function hexList(dashed: string): string[] {
   return dashed.split("-").map((h) => `#${h.toLowerCase()}`);
 }
