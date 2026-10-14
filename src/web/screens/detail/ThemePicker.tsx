@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Check, ExternalLink, X } from "lucide-react";
+import { Check, ChevronDown, ExternalLink, X } from "lucide-react";
 import type { SavedPalette } from "../../../shared/api-types.js";
 import type { Theme } from "../../../shared/validation.js";
 import { api, errorMessage, useApi } from "../../api.js";
@@ -25,6 +25,8 @@ const PRESETS: { name: string; theme: Theme }[] = [
 ];
 
 const paletteKey = (colors: string[]) => colors.join("-").toLowerCase();
+
+const paletteLabel = (p: SavedPalette) => `Imported ${new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
 
 const cardClass = (selected: boolean) =>
   cx(
@@ -59,41 +61,33 @@ function PresetCard({ name, theme, selected, onClick }: { name: string; theme: T
   );
 }
 
-// Miniature of a link page (background, a text line and a button) that applies one version of a palette.
-function VariantThumb({ theme, label, selected, onClick }: { theme: Theme; label: string; selected: boolean; onClick: () => void }) {
+// Miniature of a link page: background, a line of text and a button.
+function ThemeThumb({ theme }: { theme: Theme }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      aria-label={label}
-      title={label}
-      className={cx(
-        "flex h-8 w-11 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-md border px-1.5 transition",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        selected ? "border-accent ring-2 ring-accent/40" : "border-border hover:scale-105 hover:border-border-strong",
-      )}
+    <span
+      className="flex h-6 w-9 shrink-0 flex-col items-center justify-center gap-0.5 rounded border border-border px-1"
       style={{ background: theme.background }}
+      aria-hidden
     >
-      <span className="h-1 w-3/5 rounded-full" style={{ background: theme.text }} />
-      <span className="h-2 w-full rounded-sm" style={{ background: theme.button }} />
-    </button>
+      <span className="h-0.5 w-3/5 rounded-full" style={{ background: theme.text }} />
+      <span className="h-1.5 w-full rounded-sm" style={{ background: theme.button }} />
+    </span>
   );
 }
 
-// A palette: each color opens the role menu, the two thumbnails apply a dark or light version of it.
+// A palette card: each color opens the role menu, the name row opens the dark/light menu.
 function PaletteCard({
   colors,
   label,
   selected,
-  onApply,
+  onOpenVariants,
   onPickColor,
   onRemove,
 }: {
   colors: string[];
   label: string;
   selected: Variant | null;
-  onApply: (variant: Variant) => void;
+  onOpenVariants: (anchor: HTMLElement) => void;
   onPickColor: (color: string, anchor: HTMLElement) => void;
   onRemove?: () => void;
 }) {
@@ -113,24 +107,28 @@ function PaletteCard({
           />
         ))}
       </div>
-      <div className="flex items-center gap-1.5 py-2 pr-2 pl-3">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-        {(["dark", "light"] as const).map((v) => (
-          <VariantThumb
-            key={v}
-            theme={themeFromPalette(colors, v)}
-            label={`Use ${label} with a ${v} background`}
-            selected={selected === v}
-            onClick={() => onApply(v)}
-          />
-        ))}
+      <div className="flex items-center">
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-label={`Use ${label}…`}
+          onClick={(e) => onOpenVariants(e.currentTarget)}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm font-medium outline-none transition-colors hover:bg-surface-2/60 focus-visible:bg-surface-2/60 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset"
+        >
+          <span className="truncate">{label}</span>
+          {selected && <span className="shrink-0 text-xs font-normal text-muted">{selected === "dark" ? "Dark" : "Light"}</span>}
+          <span className="ml-auto flex shrink-0 items-center gap-1">
+            {selected && <Check className="size-4 text-accent" />}
+            <ChevronDown className="size-4 text-muted" />
+          </span>
+        </button>
         {onRemove && (
           <button
             type="button"
             onClick={onRemove}
             aria-label={`Remove ${label}`}
             title="Remove palette"
-            className="ml-0.5 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-danger"
+            className="cursor-pointer self-stretch px-2.5 text-muted outline-none transition-colors hover:bg-surface-2/60 hover:text-danger focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset"
           >
             <X className="size-4" />
           </button>
@@ -140,24 +138,24 @@ function PaletteCard({
   );
 }
 
-// Small menu next to a clicked color: "use as background / text / buttons / button text".
-function ColorRoleMenu({
-  color,
+// Small menu anchored to an element: placed below it (or above when there's no room), closes on outside
+// click, Escape, scroll and resize, and supports arrow keys.
+function PopoverMenu({
   anchor,
-  theme,
-  onPick,
+  label,
+  header,
   onClose,
+  children,
 }: {
-  color: string;
   anchor: HTMLElement;
-  theme: Theme;
-  onPick: (role: keyof Theme) => void;
+  label: string;
+  header: ReactNode;
   onClose: () => void;
+  children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
-  // Place below the color (or above when there's no room), kept inside the viewport.
   useLayoutEffect(() => {
     const menu = ref.current;
     if (!menu) return;
@@ -176,7 +174,7 @@ function ColorRoleMenu({
 
   useEffect(() => {
     const outside = (e: PointerEvent) => {
-      if (!ref.current?.contains(e.target as Node) && e.target !== anchor) onClose();
+      if (!ref.current?.contains(e.target as Node) && !anchor.contains(e.target as Node)) onClose();
     };
     const dismiss = () => onClose();
     const escape = (e: globalThis.KeyboardEvent) => {
@@ -197,48 +195,47 @@ function ColorRoleMenu({
   }, [anchor, onClose]);
 
   const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
     const items = [...(ref.current?.querySelectorAll<HTMLButtonElement>("[role=menuitem]") ?? [])];
     const index = items.indexOf(document.activeElement as HTMLButtonElement);
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      const next = (index + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
-      items[next]?.focus();
-    }
+    items[(index + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length]?.focus();
   };
 
   return (
     <div
       ref={ref}
       role="menu"
-      aria-label={`Use ${color.toUpperCase()} for`}
+      aria-label={label}
       onKeyDown={onKeyDown}
       className="fixed z-50 w-56 animate-pop-in rounded-xl border border-border bg-surface p-1 shadow-xl"
       style={position ?? { visibility: "hidden", top: 0, left: 0 }}
     >
-      <div className="flex items-center gap-2 px-2.5 pt-1.5 pb-2 text-xs text-muted">
-        <span className="size-4 rounded border border-border" style={{ background: color }} />
-        <span className="font-mono uppercase">{color}</span>
-        <span>use for…</span>
-      </div>
-      {COLOR_FIELDS.map(([key, label]) => {
-        const current = theme[key].toLowerCase() === color.toLowerCase();
-        return (
-          <button
-            key={key}
-            type="button"
-            role="menuitem"
-            onClick={() => onPick(key)}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm outline-none hover:bg-surface-2 focus-visible:bg-surface-2"
-          >
-            <span className="size-4 rounded border border-border" style={{ background: theme[key] }} title={`Current: ${theme[key]}`} />
-            <span className="flex-1">{label}</span>
-            {current && <Check className="size-4 text-accent" />}
-          </button>
-        );
-      })}
+      <div className="flex items-center gap-2 px-2.5 pt-1.5 pb-2 text-xs text-muted">{header}</div>
+      {children}
     </div>
   );
 }
+
+function MenuItem({ leading, label, checked, onClick }: { leading: ReactNode; label: string; checked: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm outline-none hover:bg-surface-2 focus-visible:bg-surface-2"
+    >
+      {leading}
+      <span className="flex-1">{label}</span>
+      {checked && <Check className="size-4 text-accent" />}
+    </button>
+  );
+}
+
+type OpenMenu =
+  | { kind: "color"; color: string; anchor: HTMLElement }
+  | { kind: "variant"; colors: string[]; label: string; anchor: HTMLElement }
+  | null;
 
 // Theme picker: basic presets, trending and saved coolors.co palettes, and custom colors.
 export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (theme: Theme) => void }) {
@@ -250,9 +247,14 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
   const [link, setLink] = useState("");
   const [linkError, setLinkError] = useState<string>();
   const [importing, setImporting] = useState(false);
-  const [menu, setMenu] = useState<{ color: string; anchor: HTMLElement } | null>(null);
+  const [menu, setMenu] = useState<OpenMenu>(null);
 
-  const toggleMenu = (color: string, anchor: HTMLElement) => setMenu((m) => (m?.anchor === anchor ? null : { color, anchor }));
+  // Clicking the element that opened a menu again closes it.
+  const toggleMenu = (next: NonNullable<OpenMenu>) => setMenu((m) => (m?.anchor === next.anchor ? null : next));
+  const closeMenu = (refocus = false) => {
+    if (refocus) menu?.anchor.focus();
+    setMenu(null);
+  };
 
   const applyPalette = (colors: string[], variant: Variant) => {
     setSource({ colors, variant });
@@ -301,7 +303,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
     }
   };
 
-  const pickHint = "Pick the dark or light version of a palette, or click a single color to use it for one part.";
+  const pickHint = "Click a palette's name to use it with a dark or light background, or a single color to use it for one part.";
 
   return (
     <div className="flex flex-col gap-7">
@@ -334,8 +336,8 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
               label={p.name}
               colors={p.colors}
               selected={selectedVariant(p.colors)}
-              onApply={(v) => applyPalette(p.colors, v)}
-              onPickColor={toggleMenu}
+              onOpenVariants={(anchor) => toggleMenu({ kind: "variant", colors: p.colors, label: p.name, anchor })}
+              onPickColor={(color, anchor) => toggleMenu({ kind: "color", color, anchor })}
             />
           ))}
         </div>
@@ -379,11 +381,11 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
             {saved.data.map((p) => (
               <PaletteCard
                 key={p.id}
-                label={`Imported ${new Date(p.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`}
+                label={paletteLabel(p)}
                 colors={p.colors}
                 selected={selectedVariant(p.colors)}
-                onApply={(v) => applyPalette(p.colors, v)}
-                onPickColor={toggleMenu}
+                onOpenVariants={(anchor) => toggleMenu({ kind: "variant", colors: p.colors, label: paletteLabel(p), anchor })}
+                onPickColor={(color, anchor) => toggleMenu({ kind: "color", color, anchor })}
                 onRemove={() => void removePalette(p)}
               />
             ))}
@@ -403,18 +405,49 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
         </div>
       </div>
 
-      {menu && (
-        <ColorRoleMenu
-          color={menu.color}
+      {menu?.kind === "color" && (
+        <PopoverMenu
           anchor={menu.anchor}
-          theme={theme}
-          onClose={() => setMenu(null)}
-          onPick={(role) => {
-            setColor(role, menu.color);
-            setMenu(null);
-            menu.anchor.focus();
-          }}
-        />
+          label={`Use ${menu.color.toUpperCase()} for`}
+          onClose={closeMenu}
+          header={
+            <>
+              <span className="size-4 rounded border border-border" style={{ background: menu.color }} />
+              <span className="font-mono uppercase">{menu.color}</span>
+              <span>use for…</span>
+            </>
+          }
+        >
+          {COLOR_FIELDS.map(([key, label]) => (
+            <MenuItem
+              key={key}
+              label={label}
+              leading={<span className="size-4 rounded border border-border" style={{ background: theme[key] }} title={`Current: ${theme[key]}`} />}
+              checked={theme[key].toLowerCase() === menu.color.toLowerCase()}
+              onClick={() => {
+                setColor(key, menu.color);
+                closeMenu(true);
+              }}
+            />
+          ))}
+        </PopoverMenu>
+      )}
+
+      {menu?.kind === "variant" && (
+        <PopoverMenu anchor={menu.anchor} label={`Use ${menu.label} with`} onClose={closeMenu} header={<span>Use {menu.label} with…</span>}>
+          {(["dark", "light"] as const).map((v) => (
+            <MenuItem
+              key={v}
+              label={v === "dark" ? "Dark background" : "Light background"}
+              leading={<ThemeThumb theme={themeFromPalette(menu.colors, v)} />}
+              checked={selectedVariant(menu.colors) === v}
+              onClick={() => {
+                applyPalette(menu.colors, v);
+                closeMenu(true);
+              }}
+            />
+          ))}
+        </PopoverMenu>
       )}
     </div>
   );
