@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   DOCKER_HUB_IMAGE_NAME: traberph/short
   PRIVATE_REGISTRY: registry.traberph.de
-  PRIVATE_IMAGE_NAME: traberph/short
+  PRIVATE_IMAGE_NAME: public/short
 
 jobs:
   test:
