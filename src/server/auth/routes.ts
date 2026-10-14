@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { deleteCookie, getCookie, getSignedCookie, setCookie, setSignedCookie } from "hono/cookie";
 import type { AppEnv, Deps } from "../app.js";
 import { calculatePKCECodeChallenge, randomPKCECodeVerifier, randomState } from "./oidc.js";
+import { HttpError } from "../lib/errors.js";
 import { createSession, deleteSession, SESSION_TTL_MS, upsertUser } from "./sessions.js";
 
 export const SESSION_COOKIE = "short_session";
@@ -38,7 +39,14 @@ export function authRoutes({ db, config, oidc }: Deps) {
       // Behind a reverse proxy the request URL may be internal, so rebuild it from BASE_URL.
       const requestUrl = new URL(c.req.url);
       const currentUrl = new URL(`${redirectUri}${requestUrl.search}`);
-      const claims = await oidc.exchange({ currentUrl, state, codeVerifier });
+      let claims;
+      try {
+        claims = await oidc.exchange({ currentUrl, state, codeVerifier });
+      } catch (err) {
+        // E.g. the login was cancelled at the identity provider or took too long.
+        console.warn("OIDC callback failed:", err instanceof Error ? err.message : err);
+        throw new HttpError(400, "Sign-in failed. Please try again.");
+      }
       const actor = upsertUser(db, claims, config.adminGroup);
 
       setCookie(c, SESSION_COOKIE, createSession(db, actor.id), {

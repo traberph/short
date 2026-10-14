@@ -48,6 +48,10 @@ export function createApp(deps: Deps) {
 
   app.onError((err, c) => {
     const isApi = c.req.path.startsWith("/~/api/");
+    // Two requests claiming the same unique value at once (e.g. a shortcode): the database rejects the second.
+    if ((err as { code?: string }).code === "SQLITE_CONSTRAINT_UNIQUE") {
+      err = new HttpError(409, "This already exists. Please try again with a different value.");
+    }
     if (err instanceof HttpError) {
       if (isApi) return c.json({ error: err.message, issues: err.issues }, err.status);
       return c.html(<MessagePage title="Something went wrong" message={err.message} link={{ href: "/~/", label: "Back" }} />, err.status);

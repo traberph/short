@@ -67,6 +67,12 @@ docker compose up -d
 
 Put it behind a reverse proxy with TLS. Back up `data/`: it holds the SQLite database (`short.db`) and the uploaded avatars. Database migrations run automatically on startup.
 
+## Security notes
+
+- **Reverse proxy:** with `TRUST_PROXY=true` the visitor IP is taken from the last `X-Forwarded-For` entry, so the proxy in front of short must append to that header (Traefik, Caddy and nginx' `$proxy_add_x_forwarded_for` do).
+- **Removing someone:** admin rights and access follow Authentik at each sign-in, but existing sessions (up to 30 days) and API tokens keep working. When someone leaves or loses admin rights, use **Administration → user → Revoke access** to end their sessions and delete their tokens, and remove their access in Authentik.
+- **Rate limiting** isn't built in. Every visit is recorded, so very public links can be flooded to inflate stats; rate-limit at the reverse proxy if needed. Individual clicks are deleted after 90 days.
+
 ## API
 
 The admin UI uses the same JSON API. Create a token under **API tokens**; it has the same permissions as your account.

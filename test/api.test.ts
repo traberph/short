@@ -63,6 +63,17 @@ describe("authentication", () => {
     });
   });
 
+  it("shows a friendly page when the identity provider rejects the login", async () => {
+    const { app, setNextLogin } = setup();
+    const login = await app.request("/~/auth/login");
+    setNextLogin(new Error("state mismatch"));
+    const res = await app.request("/~/auth/callback?code=c&state=s", {
+      headers: { cookie: login.headers.get("set-cookie")!.split(";")[0]! },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Sign-in failed");
+  });
+
   it("rejects usernames that aren't URL-safe", async () => {
     const { app, setNextLogin } = setup();
     const login = await app.request("/~/auth/login");
@@ -165,6 +176,24 @@ describe("namespaces and permissions", () => {
     expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "api" })).status).toBe(409);
     expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "bob" })).status).toBe(409);
     expect((await admin.api("PATCH", `/pages/${root.id}`, { code: "r" })).status).toBe(200);
+  });
+
+  it("lets admins revoke a user's sessions and API tokens", async () => {
+    const { app, user } = setup();
+    const alice = user("alice");
+    const bob = user("bob");
+    const admin = user("root", true);
+    const cookie = `short_session=${alice.session}`;
+
+    expect((await bob.api("DELETE", "/users/alice/access")).status).toBe(403);
+    expect((await admin.api("DELETE", "/users/nobody/access")).status).toBe(404);
+
+    const res = await admin.api("DELETE", "/users/alice/access");
+    expect(await res.json()).toEqual({ sessions: 1, tokens: 1 });
+    expect((await alice.api("GET", "/me")).status).toBe(401);
+    expect((await app.request("/~/api/me", { headers: { cookie } })).status).toBe(401);
+    // Other users are unaffected.
+    expect((await bob.api("GET", "/me")).status).toBe(200);
   });
 
   it("restricts admin-only endpoints", async () => {
@@ -321,6 +350,21 @@ describe("redirects and stats", () => {
 
     expect((await alice.api("DELETE", `/pages/${page.id}/stats`)).status).toBe(204);
     expect((await (await alice.api("GET", `/pages/${page.id}/stats`)).json()).total).toBe(0);
+  });
+
+  it("uses the proxy-added X-Forwarded-For entry, not the client-supplied ones", async () => {
+    const { app, user } = setup();
+    const alice = user("alice");
+    const page = await (await alice.api("POST", "/pages", { kind: "redirect", code: "cv", dest: "https://example.com/cv" })).json();
+
+    // Same real client (last entry) faking different addresses in front: still one visitor.
+    for (const fake of ["10.0.0.1", "10.9.9.9", "172.16.0.1"]) {
+      await app.request("/alice/cv", { headers: { "x-forwarded-for": `${fake}, 5.6.7.8`, "user-agent": "test" } });
+    }
+    await flush();
+    const stats = await (await alice.api("GET", `/pages/${page.id}/stats`)).json();
+    expect(stats.today).toBe(3);
+    expect(stats.uniquesToday).toBe(1);
   });
 
   it("returns 404 for unknown links and the pinned page at the root", async () => {

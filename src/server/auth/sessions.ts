@@ -75,3 +75,14 @@ export function createApiToken(db: Db, userId: number, name: string) {
 export function pruneSessions(db: Db, now = new Date()): number {
   return db.delete(sessions).where(lt(sessions.expiresAt, now)).run().changes;
 }
+
+// Ends all sessions and deletes all API tokens of a user, e.g. when they leave.
+// They can sign in again only if Authentik still lets them.
+export function revokeAccess(db: Db, username: string): { sessions: number; tokens: number } | null {
+  const user = db.select().from(users).where(eq(users.username, username)).get();
+  if (!user) return null;
+  return db.transaction((tx) => ({
+    sessions: tx.delete(sessions).where(eq(sessions.userId, user.id)).run().changes,
+    tokens: tx.delete(apiTokens).where(eq(apiTokens.userId, user.id)).run().changes,
+  }));
+}

@@ -16,7 +16,7 @@ import {
 } from "../shared/validation.js";
 import type { AppEnv, Deps } from "./app.js";
 import { requireActor } from "./auth/middleware.js";
-import { createApiToken } from "./auth/sessions.js";
+import { createApiToken, revokeAccess } from "./auth/sessions.js";
 import { apiTokens } from "./db/schema.js";
 import { forbidden, HttpError, notFound } from "./lib/errors.js";
 import { removeMedia, saveAvatar } from "./lib/media.js";
@@ -185,6 +185,12 @@ export function apiRoutes(deps: Deps) {
       .get("/users", (c) => {
         if (!c.var.actor.isAdmin) throw forbidden();
         return c.json(pages.listUsernames(db));
+      })
+      .delete("/users/:username/access", (c) => {
+        if (!c.var.actor.isAdmin) throw forbidden();
+        const revoked = revokeAccess(db, c.req.param("username"));
+        if (!revoked) throw notFound();
+        return c.json(revoked);
       })
       .get("/conflicts", (c) => {
         if (!c.var.actor.isAdmin) throw forbidden();

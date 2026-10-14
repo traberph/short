@@ -11,7 +11,8 @@ import { LinkPage, MessagePage } from "./views.js";
 export function publicRoutes({ db, config }: Deps) {
   const clientIp = (c: Context<AppEnv>): string => {
     if (config.trustProxy) {
-      const forwarded = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+      // The last entry is the one added by our proxy; earlier ones can be set by the client.
+      const forwarded = c.req.header("x-forwarded-for")?.split(",").at(-1)?.trim();
       if (forwarded) return forwarded;
     }
     try {

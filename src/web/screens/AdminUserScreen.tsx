@@ -1,14 +1,50 @@
 import { useState } from "react";
-import { ChevronRight, Link2, MousePointerClick, PanelsTopLeft, Plus, UserX } from "lucide-react";
+import { ChevronRight, Link2, MousePointerClick, PanelsTopLeft, Plus, ShieldOff, UserX } from "lucide-react";
 import type { Me, PageKind, PageSummary } from "../../shared/api-types.js";
-import { useApi } from "../api.js";
+import { api, useApi } from "../api.js";
 import { CreatePageDialog } from "../components/CreatePageDialog.js";
 import { PageTable } from "../components/PageTable.js";
 import { Button, buttonClass } from "../components/ui/button.js";
 import { Link, Stat } from "../components/ui/misc.js";
-import { EmptyState, Skeleton } from "../components/ui/surface.js";
-import { useToast } from "../components/ui/toast.js";
+import { useConfirm } from "../components/ui/dialog.js";
+import { Card, CardHeader, EmptyState, Skeleton } from "../components/ui/surface.js";
+import { useAction, useToast } from "../components/ui/toast.js";
 import { detailPath, navigate } from "../router.js";
+
+// Offboarding: ends the user's sessions and deletes their API tokens. Their content stays online.
+function RevokeAccessCard({ username }: { username: string }) {
+  const confirm = useConfirm();
+  const { busy, run } = useAction();
+  const toast = useToast();
+
+  const revoke = async () => {
+    const ok = await confirm({
+      title: `Revoke ${username}'s access?`,
+      description: `${username} is signed out everywhere and their API tokens are deleted. Their links and pages stay online. To stop them from signing in again, remove their access in Authentik.`,
+      confirmLabel: "Revoke access",
+      danger: true,
+    });
+    if (!ok) return;
+    void run(async () => {
+      const { sessions, tokens } = await api<{ sessions: number; tokens: number }>("DELETE", `/users/${encodeURIComponent(username)}/access`);
+      toast(`Ended ${sessions} ${sessions === 1 ? "session" : "sessions"}, deleted ${tokens} API ${tokens === 1 ? "token" : "tokens"}`);
+    });
+  };
+
+  return (
+    <Card className="border-danger/30">
+      <CardHeader
+        title={<span className="text-danger">Revoke access</span>}
+        description="Sign this user out everywhere and delete their API tokens, e.g. when they leave. Their links and pages stay online."
+        actions={
+          <Button variant="danger" size="sm" icon={<ShieldOff />} loading={busy} onClick={() => void revoke()}>
+            Revoke access
+          </Button>
+        }
+      />
+    </Card>
+  );
+}
 
 // Everything one user owns, for admins. Kept apart from the admin's own and root content.
 export function AdminUserScreen({ username, me }: { username: string; me: Me }) {
@@ -88,6 +124,8 @@ export function AdminUserScreen({ username, me }: { username: string; me: Me }) 
           <h2 className="mb-3 text-base font-semibold">Link pages</h2>
           <PageTable kind="linkpage" pages={theirs} empty={{ title: "No link pages", description: `${username} hasn't created any link pages.` }} />
         </section>
+
+        <RevokeAccessCard username={username} />
       </div>
 
       {creating && (

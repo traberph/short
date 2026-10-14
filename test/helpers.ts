@@ -27,10 +27,13 @@ export function setup(overrides: Partial<Config> = {}) {
   const db = openDb(":memory:");
 
   // The fake provider returns whatever claims the test queued for the next login.
-  let nextClaims: OidcClaims = { sub: "sub-x", username: "x", groups: [] };
+  let nextClaims: OidcClaims | Error = { sub: "sub-x", username: "x", groups: [] };
   const oidc: OidcProvider = {
     authorizationUrl: async ({ state }) => new URL(`https://auth.test/authorize?state=${state}`),
-    exchange: async () => nextClaims,
+    exchange: async () => {
+      if (nextClaims instanceof Error) throw nextClaims;
+      return nextClaims;
+    },
   };
 
   const app = createApp({ db, config, oidc });
@@ -53,7 +56,7 @@ export function setup(overrides: Partial<Config> = {}) {
     db,
     config,
     user,
-    setNextLogin: (claims: OidcClaims) => {
+    setNextLogin: (claims: OidcClaims | Error) => {
       nextClaims = claims;
     },
   };
