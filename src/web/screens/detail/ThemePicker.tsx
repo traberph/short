@@ -325,10 +325,7 @@ export function ThemePicker({ theme, onChange }: { theme: Theme; onChange: (them
 
       <div>
         <SectionLabel hint={pickHint}>
-          Trending on{" "}
-          <a href="https://coolors.co/palettes/trending" target="_blank" rel="noreferrer" className="text-accent hover:underline">
-            coolors.co
-          </a>
+          Colourful
         </SectionLabel>
         <div className="grid grid-cols-2 gap-3">
           {TRENDING_PALETTES.map((p) => (
